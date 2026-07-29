@@ -15,10 +15,11 @@ src-tauri/target
 .env.local
 
 # vendored tooling
-.claude/skills/
+
 .impeccable/
 
 # next.js / vercel
 web/.next
 web/node_modules
 .vercel
+.claude/
