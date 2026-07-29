@@ -103,7 +103,7 @@ export const RULES: Record<Platform, PlatformRules> = {
   },
   instagram: {
     limit: 2200,
-    maxSlides: 20,
+    maxSlides: 10,
     kinds: ["carousel", "reel", "image", "post"],
     manualOnly: true,
   },
