@@ -1,0 +1,142 @@
+/* ═══ T4 · VAST QUIET — space is the material ═══════════════════════════════
+   Nothing is boxed. There are almost no rules, no fills, no shadows; structure
+   comes from distance alone. Type runs large and light with long leading, and
+   the accent appears perhaps twice on a screen. The bet: for a tool used in
+   short bursts many times a day, calm beats density.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.stage[data-theme="t4"] {
+  --ui: "Libre Franklin", -apple-system, sans-serif;
+  --display: "Libre Franklin", sans-serif;
+  --mono: "Azeret Mono", ui-monospace, monospace;
+  font-family: var(--ui); font-weight: 400;
+  background: var(--ground);
+}
+.stage[data-theme="t4"] :is(.meta, .time, .stime, .evt, .cd) {
+  font-family: var(--mono); font-size: calc(var(--f-1) * .74); letter-spacing: .04em; color: var(--ink-4);
+}
+.stage[data-theme="t4"] :is(.sechead, .ahead, .lead, .spinehead, .corner, .trayhead b, .sdiv b, .why) {
+  letter-spacing: .18em; text-transform: uppercase; font-size: calc(var(--f-1) * .72);
+  font-weight: 500; color: var(--ink-4);
+}
+
+.stage[data-theme="t4"] .side, .stage[data-theme="t4"] .spine { background: none; }
+.stage[data-theme="t4"] .pane { background: none; }
+.stage[data-theme="t4"] :is(.bar, .cmdbar) { border-bottom: 0; padding-inline: 30px; }
+.stage[data-theme="t4"] :is(.dock, .statusline, .tray, .nextdue) { border-top: 0; padding-inline: 30px; }
+.stage[data-theme="t4"] .ttl h1 { font-size: var(--f2); font-weight: 400; letter-spacing: -.02em; }
+.stage[data-theme="t4"] .ttl .sub { color: var(--ink-4); }
+.stage[data-theme="t4"] .nextdue { opacity: .62; }
+
+/* Distance instead of containers. */
+.stage[data-theme="t4"] .feed, .stage[data-theme="t4"] .stream { padding-inline: 30px; }
+.stage[data-theme="t4"] .row.card { padding-block: calc(var(--row-pad) * 1.7); border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t4"] .srowhead { padding-block: calc(var(--row-pad) * 1.7); }
+.stage[data-theme="t4"] .day, .stage[data-theme="t4"] .sdiv { padding: 40px 4px 14px; background: none; }
+.stage[data-theme="t4"] .day h2 { font-size: var(--f1); font-weight: 400; }
+.stage[data-theme="t4"] .day .ln, .stage[data-theme="t4"] .sdiv i { display: none; }
+.stage[data-theme="t4"] .body { line-height: 1.62; -webkit-line-clamp: 2; }
+.stage[data-theme="t4"] .who .h { font-weight: 400; color: var(--ink-3); }
+.stage[data-theme="t4"] .k { color: var(--ink-4); font-size: calc(var(--f-1) * .76); letter-spacing: .1em; text-transform: uppercase; }
+.stage[data-theme="t4"] .k.warn { color: var(--accent); }
+.stage[data-theme="t4"] .time { color: var(--ink-3); font-size: calc(var(--f-1) * .82); }
+
+.stage[data-theme="t4"] .lists { padding-inline: 20px; gap: 4px; }
+.stage[data-theme="t4"] .lrow { padding: 7px 10px; color: var(--ink-3); }
+.stage[data-theme="t4"] .lrow .c { opacity: .55; }
+.stage[data-theme="t4"] :is(.lrow, .scard).on { background: none; color: var(--ink); font-weight: 500; }
+.stage[data-theme="t4"] :is(.lrow, .scard).on::before { content: "—"; margin-right: 4px; color: var(--accent); }
+.stage[data-theme="t4"] :is(.lrow, .arow, .unrow, .scard, .ev, .srowhead, .tcard):hover { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
+.stage[data-theme="t4"] .accts { padding-inline: 20px; opacity: .82; }
+.stage[data-theme="t4"] .proj { margin-inline: 20px; }
+.stage[data-theme="t4"] .search { margin-inline: 20px; }
+.stage[data-theme="t4"] .field { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t4"] .pmark { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t4"] .av { background: var(--ink-4); color: var(--ground); font-weight: 500; }
+.stage[data-theme="t4"] .av[data-platform="linkedin"] { background: #7f92a3; }
+.stage[data-theme="t4"] .av[data-platform="instagram"] { background: #a98d97; }
+
+.stage[data-theme="t4"] .seg { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t4"] .seg button.on { background: var(--ground); color: var(--ink); }
+.stage[data-theme="t4"] .icobtn.acc { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t4"] :is(.btn, .verb) { background: color-mix(in srgb, var(--ink) 5%, transparent); font-weight: 500; }
+.stage[data-theme="t4"] :is(.btn, .verb).pri { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t4"] .verb.ghost { background: none; color: var(--ink-4); }
+.stage[data-theme="t4"] .chip { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.stage[data-theme="t4"] .chip.on { background: none; box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t4"] .sched { background: none; color: var(--accent); box-shadow: inset 0 0 0 1px var(--acc-soft); }
+.stage[data-theme="t4"] .sched.ghost { color: var(--ink-4); box-shadow: inset 0 0 0 1px var(--rule); }
+
+.stage[data-theme="t4"][data-sel="rail"] [data-sel] { box-shadow: inset 2px 0 0 var(--accent); }
+.stage[data-theme="t4"][data-sel="fill"] [data-sel] { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.stage[data-theme="t4"][data-sel="outline"] [data-sel] { box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t4"][data-sel="invert"] [data-sel] { background: var(--ink); }
+.stage[data-theme="t4"][data-sel="invert"] [data-sel] :is(.body, .h, .k, .time, .pgl, .evt, .evb) { color: var(--ground); }
+
+/* stream */
+.stage[data-theme="t4"] .cmdbar { padding: 34px 30px 0; }
+.stage[data-theme="t4"] .cmd { background: none; padding: 0; font-size: var(--f3); font-weight: 300; }
+.stage[data-theme="t4"] .cmd .typed { line-height: 1.28; }
+.stage[data-theme="t4"] .tok { background: none; padding: 0; }
+.stage[data-theme="t4"] .tok.when, .stage[data-theme="t4"] .tok.who { color: var(--accent); }
+.stage[data-theme="t4"] .tok.who { color: var(--ink-3); }
+.stage[data-theme="t4"] .parse { padding: 20px 0 26px; opacity: .8; }
+.stage[data-theme="t4"] .sopen { padding-left: 106px; }
+.stage[data-theme="t4"] .editor { line-height: 1.78; font-size: var(--f1); font-weight: 300; }
+
+/* timeline */
+.stage[data-theme="t4"] .gridhead { background: none; }
+.stage[data-theme="t4"] .lanelab { background: none; opacity: .7; }
+.stage[data-theme="t4"] .lane { border-bottom: 1px solid var(--rule); min-height: 96px; }
+.stage[data-theme="t4"] .dhead b { font-weight: 400; }
+.stage[data-theme="t4"] .dhead.today b { color: var(--accent); }
+.stage[data-theme="t4"] .cell.today { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.stage[data-theme="t4"] .ev { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t4"] .ev[data-status="failed"] { box-shadow: inset 0 0 0 1px var(--acc-soft); }
+.stage[data-theme="t4"] .tray { padding: 22px 30px 26px; }
+.stage[data-theme="t4"] .tcard { background: none; box-shadow: inset 0 0 0 1px var(--rule); }
+
+/* desk — the theme's best case */
+.stage[data-theme="t4"] .deskbody { padding: 46px 60px 50px; gap: 46px; }
+.stage[data-theme="t4"] .idea h1 { font-weight: 300; letter-spacing: -.026em; line-height: 1.08; }
+.stage[data-theme="t4"] .thesis { font-weight: 300; line-height: 1.72; padding-top: 20px; }
+.stage[data-theme="t4"] .vcard { background: none; box-shadow: inset 0 0 0 1px var(--rule); min-height: 232px; }
+.stage[data-theme="t4"] .vcard[data-status="idea"] { box-shadow: inset 0 0 0 1px var(--rule); opacity: .58; }
+.stage[data-theme="t4"] .vhead { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t4"] .vfoot { border-top: 1px solid var(--rule); }
+.stage[data-theme="t4"] .vbody { line-height: 1.62; }
+.stage[data-theme="t4"] .todo .box { box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t4"] .todo.done .box { background: var(--ink); color: var(--ground); box-shadow: none; }
+
+/* triage */
+.stage[data-theme="t4"] .focus { background: none; padding: 44px 30px 30px; margin: 0 30px 30px; border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t4"] .fbody { font-size: var(--f3); font-weight: 300; line-height: 1.44; padding: 22px 0 24px; }
+.stage[data-theme="t4"] .why { color: var(--accent); }
+.stage[data-theme="t4"] .upnext { padding-inline: 30px; }
+.stage[data-theme="t4"] .unrow { padding-block: calc(var(--row-pad) * 1.4); }
+.stage[data-theme="t4"] .inboxend { padding-top: 40px; opacity: .6; }
+.stage[data-theme="t4"] .progress { background: var(--rule); }
+
+/* library */
+.stage[data-theme="t4"] .gal, .stage[data-theme="t4"] .filters { padding-inline: 30px; }
+.stage[data-theme="t4"] .gal, .stage[data-theme="t4"] .galcol { gap: 22px; }
+.stage[data-theme="t4"] .txt { background: none; box-shadow: inset 0 0 0 1px var(--rule); padding: 18px 18px 20px; }
+.stage[data-theme="t4"] .txt p { line-height: 1.62; font-weight: 300; }
+.stage[data-theme="t4"] .txt.note .lab { color: var(--accent); }
+.stage[data-theme="t4"] .artbody { padding: 14px 2px 4px; }
+.stage[data-theme="t4"] .artbody h3 { font-weight: 400; }
+.stage[data-theme="t4"] .edge { background: color-mix(in srgb, var(--ink) 10%, var(--ground)); }
+.stage[data-theme="t4"] .pill { background: rgb(255 255 255 / .82); color: #1b1b1d; font-weight: 500; backdrop-filter: blur(6px); }
+.stage[data-theme="t4"] .scrim { background: linear-gradient(transparent, rgb(0 0 0 / .5)); }
+.stage[data-theme="t4"] .fchip { background: none; color: var(--ink-3); }
+.stage[data-theme="t4"] .fchip.on { background: none; color: var(--ink); box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t4"] .ph { background: linear-gradient(160deg, #dcdcd8, #c2c2bd); }
+.stage[data-theme="t4"] .ph[data-tone="1"] { background: linear-gradient(160deg, #d4d6d8, #b8bbbe); }
+.stage[data-theme="t4"] .ph[data-tone="2"] { background: linear-gradient(160deg, #ded5d8, #c3b9bd); }
+.stage[data-theme="t4"] .ph[data-tone="3"] { background: linear-gradient(160deg, #d8dcd4, #bcc2b8); }
+.stage[data-theme="t4"] .ph[data-tone="4"] { background: linear-gradient(160deg, #d3d9dc, #b7bfc3); }
+.stage[data-theme="t4"] .ph[data-tone="5"] { background: linear-gradient(160deg, #dedbd2, #c3bfb4); }
+.stage[data-theme="t4"] .ph[data-tone="6"] { background: linear-gradient(160deg, #d8d6de, #bdbac4); }
+.stage[data-theme="t4"] .ph[data-tone="7"] { background: linear-gradient(160deg, #dcdad0, #c1beb2); }
+.stage[data-theme="t4"] .ph[data-tone="8"] { background: linear-gradient(160deg, #d5dcd9, #b9c2be); }
+.stage[data-theme="t4"] .ph[data-tone="9"] { background: linear-gradient(160deg, #d9d6db, #bebac1); }

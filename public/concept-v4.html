@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Distribution — concept v4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   WARM WORKSTATION v4 — native macOS bones, warm paper skin
+   Max three columns. Preview and inspector are on demand.
+   ═══════════════════════════════════════════════════════════ */
+:root{
+  --paper:#F2ECDF;
+  --paper-raised:#FCFAF4;
+  --paper-sunk:#E9E2D1;
+  --chrome:rgba(238,231,217,.76);
+
+  --ink:#221D15;
+  --ink-2:#6A6253;
+  --ink-3:#9A9180;
+  --ink-4:#BBB2A0;
+
+  --rule:rgba(34,29,21,.085);
+  --rule-2:rgba(34,29,21,.15);
+
+  --amber:#AE710F;
+  --amber-lit:#F2C75C;
+  --amber-wash:rgba(174,113,15,.10);
+  --green:#5E9E68;
+
+  --x:#221D15; --ig:#B85374; --th:#5A4A38; --li:#3A6C86;
+
+  --r-s:6px; --r-m:9px; --r-l:14px; --r-xl:20px;
+
+  --sans:"Instrument Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+  --serif:"Fraunces",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",monospace;
+  --wonk:"SOFT" 40,"WONK" 1;
+
+  --lift:0 1px 2px rgba(60,45,20,.05), 0 6px 18px -6px rgba(60,45,20,.13);
+  --pop:0 2px 6px rgba(60,45,20,.08), 0 22px 48px -14px rgba(60,45,20,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans); font-size:13px; line-height:1.45; color:var(--ink);
+  background:#DCD4C1; -webkit-font-smoothing:antialiased;
+  display:grid; place-items:center; padding:26px; overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:left}
+input,textarea{font:inherit;color:inherit;background:none;border:0;outline:0}
+::selection{background:var(--amber-lit);color:var(--ink)}
+.grow{flex:1}
+svg{display:block}
+
+/* ── window ─────────────────────────────────────────────── */
+.win{
+  width:min(1560px,100%); height:min(940px,100%);
+  border-radius:var(--r-xl); overflow:hidden;
+  background:var(--paper); position:relative; isolation:isolate;
+  display:grid; grid-template-columns:250px 392px minmax(0,1fr);
+  box-shadow:0 0 0 .5px rgba(34,29,21,.22), 0 40px 90px -30px rgba(50,38,18,.55), 0 8px 24px rgba(50,38,18,.13);
+  transition:grid-template-columns .34s cubic-bezier(.2,.9,.25,1);
+  animation:rise .7s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.992)}to{opacity:1;transform:none}}
+
+/* three-column budget, always. Tracks match the VISIBLE panes per view. */
+.win[data-view="calendar"]{grid-template-columns:250px minmax(0,1fr)}
+.win[data-view="library"]{grid-template-columns:250px minmax(0,1fr) 296px}
+
+/* Atmosphere sits BELOW the panes (z-index 1 < .pane z-index 2). The panes are
+   transparent or translucent, so the wash and grain still read through them —
+   and popovers inside a pane can rise above them. */
+.win::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 84% 110%, rgba(242,199,92,.19), transparent 62%),
+    radial-gradient(80% 60% at 3% -8%, rgba(255,252,244,.6), transparent 58%);
+}
+.win::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.46;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+}
+
+/* pane visibility */
+.pane{min-height:0;min-width:0;position:relative;z-index:2}
+.win[data-view="queue"] .p-cal,
+.win[data-view="queue"] .p-lib,
+.win[data-view="queue"] .p-insp{display:none}
+.win[data-view="calendar"] .p-list,
+.win[data-view="calendar"] .p-comp,
+.win[data-view="calendar"] .p-lib,
+.win[data-view="calendar"] .p-insp{display:none}
+.win[data-view="library"] .p-list,
+.win[data-view="library"] .p-comp,
+.win[data-view="library"] .p-cal{display:none}
+
+/* ── shared toolbar ─────────────────────────────────────── */
+.bar{
+  height:53px;flex:none;display:flex;align-items:center;gap:10px;
+  padding:0 12px 0 18px;border-bottom:.5px solid var(--rule);
+}
+.bar .ttl-wrap{flex:none;min-width:0}
+.bar h1{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:-.015em;font-variation-settings:var(--wonk);white-space:nowrap}
+.bar .sub{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:1px;white-space:nowrap;letter-spacing:-.01em}
+
+.seg{display:flex;background:rgba(34,29,21,.055);border-radius:7px;padding:2px;flex:none}
+.seg button{padding:3.5px 10px;border-radius:5px;font-size:11.5px;color:var(--ink-2);transition:.14s;white-space:nowrap}
+.seg button.on{background:var(--paper-raised);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(34,29,21,.13)}
+
+.icobtn{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--ink-2);transition:.14s;flex:none}
+.icobtn:hover{background:rgba(34,29,21,.06);color:var(--ink)}
+.icobtn.on{background:rgba(34,29,21,.09);color:var(--ink)}
+.icobtn svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.icobtn.acc{background:var(--amber-lit);color:#3B2A08;box-shadow:0 1px 2px rgba(150,95,10,.26),inset 0 1px 0 rgba(255,255,255,.5)}
+.icobtn.acc:hover{background:#F6D372;color:#3B2A08}
+
+.btn{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;transition:.14s}
+.btn.ghost{color:var(--ink-2)}
+.btn.ghost:hover{background:rgba(34,29,21,.06);color:var(--ink)}
+.btn.solid{background:var(--ink);color:var(--paper-raised);box-shadow:0 1px 3px rgba(34,29,21,.28),inset 0 1px 0 rgba(255,255,255,.1)}
+.btn.solid:hover{background:#342D22}
+.btn.solid kbd{font-family:var(--mono);font-size:10px;opacity:.5;margin-left:6px;font-weight:400}
+
+/* ── sidebar ────────────────────────────────────────────── */
+.sidebar{
+  background:var(--chrome);backdrop-filter:blur(24px) saturate(1.4);
+  border-right:.5px solid var(--rule-2);display:flex;flex-direction:column;
+}
+.lights{display:flex;gap:8px;padding:14px 0 0 15px}
+.lights i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.13)}
+.lights i:nth-child(1){background:#EC6A5F}.lights i:nth-child(2){background:#F4BF50}.lights i:nth-child(3){background:#61C555}
+
+/* project switcher */
+.proj-wrap{position:relative;padding:14px 11px 10px}
+.proj{
+  width:100%;display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r-m);
+  background:rgba(255,253,247,.62);box-shadow:0 0 0 .5px var(--rule-2),0 1px 2px rgba(34,29,21,.05);
+  transition:.14s;
+}
+.proj:hover{background:rgba(255,253,247,.92)}
+.proj .pm{
+  width:24px;height:24px;border-radius:7px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--amber-lit),var(--amber));
+  color:#3B2A08;font-family:var(--serif);font-size:13px;font-weight:700;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 1px 3px rgba(150,95,10,.28);
+}
+.proj .pn{flex:1;min-width:0}
+.proj .pn b{display:block;font-size:12.5px;font-weight:600;letter-spacing:-.005em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj .pn span{display:block;font-size:10px;color:var(--ink-3);font-family:var(--mono);letter-spacing:-.02em}
+.proj .ch{width:12px;height:12px;stroke:var(--ink-3);stroke-width:2;fill:none;stroke-linecap:round;flex:none}
+
+.popover{
+  position:absolute;left:11px;right:11px;top:calc(100% - 4px);z-index:20;
+  background:#FBF8F1;
+  border-radius:var(--r-l);box-shadow:0 0 0 .5px var(--rule-2),var(--pop);
+  padding:5px;opacity:0;transform:translateY(-6px) scale(.98);pointer-events:none;
+  transition:.18s cubic-bezier(.2,.9,.25,1);transform-origin:top center;
+}
+.popover.open{opacity:1;transform:none;pointer-events:auto}
+.pop-lbl{padding:8px 9px 4px;font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4)}
+.pop-row{display:flex;align-items:center;gap:9px;width:100%;padding:6px 9px;border-radius:var(--r-s);color:var(--ink-2);transition:.1s}
+.pop-row:hover{background:rgba(34,29,21,.055);color:var(--ink)}
+.pop-row .sw{width:9px;height:9px;border-radius:3px;flex:none}
+.pop-row .lb{flex:1;font-size:12.5px}
+.pop-row .tick{width:13px;height:13px;stroke:var(--amber);stroke-width:2.4;fill:none;stroke-linecap:round;opacity:0}
+.pop-row.on{color:var(--ink);font-weight:600}
+.pop-row.on .tick{opacity:1}
+.pop-sep{height:.5px;background:var(--rule);margin:5px 9px}
+
+.search{
+  margin:0 12px 12px;display:flex;align-items:center;gap:7px;
+  background:rgba(255,253,247,.62);border-radius:var(--r-s);padding:5px 8px;
+  box-shadow:inset 0 0 0 .5px var(--rule-2), inset 0 1px 2px rgba(34,29,21,.035);
+}
+.search svg{width:12px;height:12px;stroke:var(--ink-3);stroke-width:2;fill:none;flex:none}
+.search input{width:100%;font-size:12.5px}
+.search input::placeholder{color:var(--ink-3)}
+.search kbd{font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+
+.scroll{flex:1;min-height:0;overflow:auto;padding:0 8px 8px}
+.scroll::-webkit-scrollbar{width:0}
+.sec{padding:13px 8px 5px;font-size:9.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-4)}
+
+.row{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border-radius:var(--r-s);color:var(--ink-2);transition:background .12s,color .12s}
+.row:hover{background:rgba(34,29,21,.045);color:var(--ink)}
+.row.on{background:var(--ink);color:var(--paper-raised);font-weight:600;box-shadow:0 1px 3px rgba(34,29,21,.22)}
+.row.on .count{color:rgba(252,250,244,.6)}
+.row.on .gl{color:var(--amber-lit)}
+.row.on .globe{stroke:rgba(252,250,244,.55)}
+.row .gl{width:15px;height:15px;flex:none;color:var(--ink-3)}
+.row .gl svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.row .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+.count{font-family:var(--mono);font-size:10.5px;color:var(--ink-4);font-variant-numeric:tabular-nums;flex:none}
+.globe{width:11px;height:11px;stroke:var(--ink-4);stroke-width:1.6;fill:none;flex:none}
+
+.plat{display:flex;align-items:center;gap:6px;padding:12px 8px 3px;color:var(--ink-3)}
+.plat svg{width:11px;height:11px;flex:none}
+.plat span{font-size:10.5px;font-weight:600;letter-spacing:.03em}
+.av{
+  width:19px;height:19px;border-radius:6px;flex:none;position:relative;display:grid;place-items:center;
+  font-size:9.5px;font-weight:700;color:#fff;letter-spacing:-.02em;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.16);
+}
+.av[data-p="x"]{background:linear-gradient(145deg,#3B342A,#1A160F)}
+.av[data-p="ig"]{background:linear-gradient(145deg,#D2708F,#A5416A)}
+.av[data-p="th"]{background:linear-gradient(145deg,#786549,#4A3C2A)}
+.av[data-p="li"]{background:linear-gradient(145deg,#4E86A2,#2C5C75)}
+.av .dot{position:absolute;right:-2px;bottom:-2px;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 1.6px #EDE6D9}
+.av .dot.off{background:var(--ink-4)}
+.addacct{color:var(--ink-3);font-size:12px;margin-top:6px}
+.addacct:hover{color:var(--amber)}
+.addacct .gl{color:var(--ink-4)}
+
+.sidefoot{border-top:.5px solid var(--rule);padding:11px 15px 13px;display:flex;align-items:center;gap:9px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--amber);flex:none;animation:pulse 2.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,199,92,.9)}70%{box-shadow:0 0 0 7px rgba(242,199,92,0)}100%{box-shadow:0 0 0 0 rgba(242,199,92,0)}}
+.sidefoot .t{font-size:11px;color:var(--ink-2);line-height:1.3}
+.sidefoot .t b{display:block;color:var(--ink);font-family:var(--mono);font-size:11.5px;font-weight:500}
+
+/* ── queue list ─────────────────────────────────────────── */
+.p-list{border-right:.5px solid var(--rule-2);display:flex;flex-direction:column;overflow:hidden}
+.feed{flex:1;min-height:0;overflow:auto;padding-bottom:20px}
+.feed::-webkit-scrollbar{width:9px}
+.feed::-webkit-scrollbar-thumb{background:rgba(34,29,21,.15);border-radius:5px;border:3px solid transparent;background-clip:content-box}
+
+.day{position:sticky;top:0;z-index:3;display:flex;align-items:baseline;gap:9px;padding:15px 18px 7px;background:linear-gradient(180deg,var(--paper) 64%,rgba(242,236,223,0));backdrop-filter:blur(6px)}
+.day h2{font-family:var(--serif);font-size:13.5px;font-weight:600}
+.day .dt{font-family:var(--mono);font-size:10px;color:var(--ink-3);letter-spacing:-.01em}
+.day .ln{flex:1;height:.5px;background:var(--rule-2)}
+
+.card{display:grid;grid-template-columns:44px minmax(0,1fr) 16px;gap:12px;align-items:start;margin:2px 11px;padding:9px 11px;border-radius:var(--r-m);transition:background .13s;position:relative}
+.card:hover{background:rgba(255,253,247,.8)}
+.card.sel{background:var(--paper-raised);box-shadow:var(--lift),0 0 0 .5px var(--rule-2)}
+.card.sel::before{content:"";position:absolute;left:-11px;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--amber)}
+.time{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);text-align:right;padding-top:1px;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.card.sel .time{color:var(--amber);font-weight:500}
+.time.na{color:var(--ink-4)}
+.who{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.who .h{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.who .k{font-size:9px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);background:rgba(34,29,21,.055);padding:1.5px 5px;border-radius:4px}
+.who .k.warn{color:var(--amber);background:var(--amber-wash)}
+.body{font-size:12.5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card.draft .body{color:var(--ink-2)}
+.strip{display:flex;gap:4px;margin-top:8px}
+.strip i,.strip .more{width:26px;height:26px;border-radius:5px;display:block;box-shadow:inset 0 0 0 .5px rgba(34,29,21,.13)}
+.strip .more{display:grid;place-items:center;font-family:var(--mono);font-size:9px;color:var(--ink-3);background:rgba(34,29,21,.05);box-shadow:none}
+.pgl{width:14px;height:14px;opacity:.45;margin-top:2px}
+.thumbA{background:linear-gradient(140deg,#E8C889,#C98F4E)}
+.thumbB{background:linear-gradient(140deg,#A9BFA4,#6E8C74)}
+.thumbC{background:linear-gradient(140deg,#D9A9A0,#B4736C)}
+.thumbD{background:linear-gradient(140deg,#B6AECB,#7E769B)}
+.thumbE{background:linear-gradient(140deg,#C9BFA6,#8E846C)}
+.thumbF{background:linear-gradient(140deg,#9FB6C4,#6C8494)}
+
+/* ── composer ───────────────────────────────────────────── */
+.p-comp{display:flex;flex-direction:column;overflow:hidden}
+.ctop{height:53px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px 0 22px;border-bottom:.5px solid var(--rule);overflow:hidden}
+.ctop .lb{font-size:11px;color:var(--ink-3);flex:none}
+.chip{display:flex;align-items:center;gap:6px;padding:3.5px 9px 3.5px 4px;border-radius:99px;background:var(--paper-raised);box-shadow:0 0 0 .5px var(--rule-2),0 1px 2px rgba(34,29,21,.04);font-size:11.5px;font-weight:600;color:var(--ink-2);transition:.14s;flex:none}
+.chip:hover{box-shadow:0 0 0 .5px var(--ink-3),0 1px 3px rgba(34,29,21,.09)}
+.chip.on{color:var(--ink);box-shadow:0 0 0 1.5px var(--amber),0 1px 3px rgba(174,113,15,.18)}
+.chip .av{width:17px;height:17px;border-radius:5px;font-size:8.5px}
+.chip.add{padding:4px 10px;background:none;box-shadow:0 0 0 .5px var(--rule-2);color:var(--ink-3);font-weight:500}
+.chip.add:hover{color:var(--amber);box-shadow:0 0 0 .5px var(--amber)}
+
+.sheet{flex:1;min-height:0;overflow:auto;padding:26px 26px 8px}
+.sheet::-webkit-scrollbar{width:9px}
+.sheet::-webkit-scrollbar-thumb{background:rgba(34,29,21,.13);border-radius:5px;border:3px solid transparent;background-clip:content-box}
+.inner{max-width:660px;margin:0 auto}
+.ttl{font-family:var(--serif);font-size:23px;font-weight:600;letter-spacing:-.02em;font-variation-settings:var(--wonk);width:100%;margin-bottom:16px}
+.ttl::placeholder{color:var(--ink-4)}
+
+.part{position:relative;padding-left:22px;padding-bottom:22px}
+.part::before{content:"";position:absolute;left:5px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--ink-4)}
+.part::after{content:"";position:absolute;left:7.7px;top:17px;bottom:0;width:1.2px;background:var(--rule-2)}
+.part:last-of-type::after{display:none}
+.part.on::before{background:var(--amber);box-shadow:0 0 0 3px var(--amber-wash)}
+.part .n{position:absolute;right:100%;margin-right:0;top:1px;font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+.write{width:100%;font-size:15.5px;line-height:1.6;resize:none;letter-spacing:-.004em;display:block}
+.write::placeholder{color:var(--ink-4)}
+.part .meta{display:flex;align-items:center;gap:9px;margin-top:8px;opacity:0;transition:.15s}
+.part:hover .meta,.part.on .meta{opacity:1}
+.part .meta span{font-family:var(--mono);font-size:9.5px;color:var(--ink-4)}
+.addpart{display:flex;align-items:center;gap:7px;color:var(--ink-3);font-size:12px;padding:2px 0 0 22px}
+.addpart:hover{color:var(--amber)}
+.addpart svg{width:13px;height:13px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+
+.media{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;padding-left:22px}
+.mtile{width:74px;height:74px;border-radius:var(--r-m);position:relative;overflow:hidden;box-shadow:0 0 0 .5px rgba(34,29,21,.13),var(--lift);transition:transform .16s cubic-bezier(.2,.8,.3,1)}
+.mtile:hover{transform:translateY(-2px)}
+.mtile span{position:absolute;left:5px;top:5px;font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.94);background:rgba(30,22,10,.4);backdrop-filter:blur(4px);padding:1px 4px;border-radius:3px}
+.mtile.add{background:none;box-shadow:none;border:1.2px dashed var(--rule-2);display:grid;place-items:center;color:var(--ink-4)}
+.mtile.add:hover{border-color:var(--amber);color:var(--amber)}
+.mtile.add svg{width:16px;height:16px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round}
+
+.dock{flex:none;border-top:.5px solid var(--rule);padding:12px 22px;display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(252,250,244,0),rgba(252,250,244,.65))}
+.when{display:flex;align-items:center;gap:7px;background:var(--amber-wash);box-shadow:0 0 0 .5px rgba(174,113,15,.26);border-radius:99px;padding:5px 12px 5px 10px;color:var(--amber);font-size:12px;font-weight:600}
+.when svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.when .mono{font-family:var(--mono);font-weight:500;font-size:11.5px;letter-spacing:-.02em}
+.ring{width:26px;height:26px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:2.6;stroke-linecap:round}
+.ring .bg{stroke:rgba(34,29,21,.1)}
+.ring .fg{stroke:var(--amber);stroke-dasharray:69.1;stroke-dashoffset:16.5}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--ink-2)}
+
+/* ── calendar ───────────────────────────────────────────── */
+.p-cal{display:flex;flex-direction:column;overflow:hidden}
+.calwrap{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 18px 18px}
+.dow{display:grid;grid-template-columns:repeat(7,1fr);padding:11px 0 8px}
+.dow span{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase;padding-left:3px}
+.cal{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:1fr;gap:6px}
+.cell{border-radius:var(--r-m);background:rgba(255,253,247,.5);box-shadow:inset 0 0 0 .5px var(--rule);padding:6px;display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden;transition:.14s}
+.cell:hover{background:rgba(255,253,247,.95);box-shadow:inset 0 0 0 .5px var(--rule-2),var(--lift)}
+.cell.out{background:transparent;box-shadow:none}
+.cell.out .dn{color:var(--ink-4)}
+.cell.today{box-shadow:inset 0 0 0 1.5px var(--amber)}
+.dn{font-family:var(--mono);font-size:10.5px;color:var(--ink-2);padding:1px 3px 2px;font-variant-numeric:tabular-nums}
+.cell.today .dn{color:var(--amber);font-weight:500}
+.ev{display:flex;align-items:center;gap:5px;padding:3px 4px;border-radius:5px;background:var(--paper-raised);box-shadow:0 0 0 .5px var(--rule);font-size:10.5px;min-width:0;transition:.12s}
+.ev:hover{box-shadow:0 0 0 .5px var(--rule-2),var(--lift)}
+.ev .av{width:13px;height:13px;border-radius:4px;font-size:7px}
+.ev .tm{font-family:var(--mono);font-size:9px;color:var(--ink-3);flex:none;letter-spacing:-.03em}
+.ev .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.ev.dr{background:none;box-shadow:0 0 0 .5px var(--rule-2) inset;border:1px dashed var(--rule-2);box-shadow:none}
+.more-ev{font-family:var(--mono);font-size:9px;color:var(--ink-4);padding-left:5px}
+
+/* ── library ────────────────────────────────────────────── */
+.p-lib{display:flex;flex-direction:column;overflow:hidden}
+.filters{display:flex;align-items:center;gap:6px;padding:12px 20px;border-bottom:.5px solid var(--rule);overflow-x:auto}
+.filters::-webkit-scrollbar{height:0}
+.fchip{padding:4px 11px;border-radius:99px;font-size:11.5px;color:var(--ink-2);box-shadow:0 0 0 .5px var(--rule-2);white-space:nowrap;transition:.14s;flex:none}
+.fchip:hover{background:rgba(255,253,247,.8)}
+.fchip.on{background:var(--ink);color:var(--paper-raised);font-weight:600;box-shadow:none}
+.fchip .c{font-family:var(--mono);font-size:9.5px;opacity:.55;margin-left:5px}
+/* Masonry columns. A tile's HEIGHT comes from what the thing actually is —
+   a reel is 9:16, a carousel is 4:5, a tweet is type on paper with no image. */
+.gal{flex:1;min-height:0;overflow:auto;padding:18px 20px 30px;display:flex;gap:16px;align-items:flex-start}
+.gal::-webkit-scrollbar{width:9px}
+.gal::-webkit-scrollbar-thumb{background:rgba(34,29,21,.14);border-radius:5px;border:3px solid transparent;background-clip:content-box}
+.galcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+
+.tile{display:block;width:100%;position:relative;z-index:0;transition:transform .17s cubic-bezier(.2,.8,.3,1)}
+.tile:hover{transform:translateY(-3px)}
+
+/* media frame — ratio set per kind */
+.m{border-radius:var(--r-l);position:relative;overflow:hidden;box-shadow:0 0 0 .5px rgba(34,29,21,.12),var(--lift)}
+.r-reel{aspect-ratio:9/16}
+.r-carousel{aspect-ratio:4/5}
+.r-square{aspect-ratio:1/1}
+.r-photo{aspect-ratio:3/4}
+.r-land{aspect-ratio:3/2}
+.tile.sel .m,.tile.sel .txtcard,.tile.sel .artcard,.tile.sel .notecard{box-shadow:0 0 0 2px var(--amber),var(--pop)}
+
+.kd{position:absolute;left:8px;top:8px;font-family:var(--mono);font-size:8.5px;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:rgba(30,22,10,.4);backdrop-filter:blur(6px);padding:2px 7px;border-radius:99px;z-index:2}
+.dur{position:absolute;right:8px;bottom:8px;font-family:var(--mono);font-size:9px;color:#fff;background:rgba(30,22,10,.46);backdrop-filter:blur(4px);padding:2px 7px;border-radius:99px;z-index:2}
+.scrim{position:absolute;inset:auto 0 0 0;height:58%;background:linear-gradient(180deg,transparent,rgba(26,18,6,.7))}
+.mtxt{position:absolute;inset:auto 0 0 0;padding:24px 11px 11px;font-size:11.5px;line-height:1.4;color:#fff;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;z-index:2}
+.play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);backdrop-filter:blur(8px);display:grid;place-items:center;box-shadow:0 2px 12px rgba(0,0,0,.22),inset 0 0 0 .5px rgba(255,255,255,.4);z-index:2}
+.play svg{width:13px;height:13px;fill:#fff;margin-left:2px}
+
+/* carousel — a stack of slides seen edge-on. The edges are siblings of .m, not
+   children: .m has overflow:hidden and would clip them. */
+.stack{margin-top:13px}
+.stack .edge{position:absolute;left:0;right:0;height:46px;border-radius:var(--r-l);background:var(--paper-raised);box-shadow:0 0 0 .5px var(--rule-2);z-index:-1}
+.stack .edge.one{top:-6px;transform:scaleX(.945)}
+.stack .edge.two{top:-12px;transform:scaleX(.885)}
+
+/* text posts — typography on paper, never a fake image */
+.txtcard{background:var(--paper-raised);border-radius:var(--r-l);box-shadow:0 0 0 .5px var(--rule-2),var(--lift);padding:16px 16px 14px;position:relative}
+.txtcard .q{font-family:var(--serif);font-size:14px;line-height:1.46;letter-spacing:-.008em;color:var(--ink);font-variation-settings:"SOFT" 40}
+.txtcard .glyph{position:absolute;right:13px;top:13px;width:12px;height:12px;opacity:.3}
+.txtcard .parts{display:inline-flex;align-items:center;gap:5px;margin-top:11px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);background:rgba(34,29,21,.05);padding:2px 7px;border-radius:99px}
+
+/* articles — a landscape hero over a headline, like a link card */
+.artcard{background:var(--paper-raised);border-radius:var(--r-l);overflow:hidden;box-shadow:0 0 0 .5px var(--rule-2),var(--lift)}
+.artcard .hero{aspect-ratio:16/9;position:relative}
+.artcard .b{padding:12px 14px 14px}
+.artcard .b h3{font-family:var(--serif);font-size:13.5px;font-weight:600;line-height:1.3;letter-spacing:-.012em}
+.artcard .b .src{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-top:7px}
+
+/* notes — warmer paper, amber label, no media at all */
+.notecard{background:linear-gradient(168deg,#FDFBF6,#F6F0E1);border-radius:var(--r-l);box-shadow:0 0 0 .5px var(--rule-2),var(--lift);padding:15px 16px 14px}
+.notecard .lbl{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--amber);margin-bottom:9px}
+.notecard .q{font-family:var(--serif);font-size:13px;line-height:1.52;color:var(--ink-2)}
+
+.cap{display:flex;align-items:center;gap:6px;padding:9px 3px 0}
+.cap .av{width:15px;height:15px;border-radius:4px;font-size:8px}
+.cap .t{flex:1;font-size:11.5px;font-weight:600;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cap .d{font-family:var(--mono);font-size:9.5px;color:var(--ink-4);flex:none}
+
+/* ── inspector ──────────────────────────────────────────── */
+.p-insp{border-left:.5px solid var(--rule-2);background:var(--paper-sunk);display:flex;flex-direction:column;overflow:hidden}
+.ibody{flex:1;min-height:0;overflow:auto;padding:18px}
+.ihero{aspect-ratio:4/5;border-radius:var(--r-l);box-shadow:0 0 0 .5px rgba(34,29,21,.12),var(--lift);margin-bottom:16px;position:relative;overflow:hidden}
+.ihero .kd{position:absolute;left:8px;top:8px;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(30,22,10,.42);backdrop-filter:blur(6px);padding:2px 6px;border-radius:99px}
+.ititle{font-family:var(--serif);font-size:16px;font-weight:600;letter-spacing:-.015em;margin-bottom:12px;line-height:1.25}
+.irow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid var(--rule);font-size:11.5px;color:var(--ink-3)}
+.irow b{color:var(--ink-2);font-weight:500;font-family:var(--mono);font-size:10.5px;letter-spacing:-.02em}
+.irow .val{display:flex;align-items:center;gap:6px;color:var(--ink-2);font-size:11.5px}
+.irow .val .av{width:15px;height:15px;border-radius:4px;font-size:8px}
+.ifoot{flex:none;border-top:.5px solid var(--rule);padding:12px 18px;display:flex;gap:8px}
+.ifoot .btn{flex:1;text-align:center}
+
+.hint{position:fixed;left:50%;bottom:7px;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:rgba(34,29,21,.38);letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<div class="win" data-view="queue">
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar pane">
+  <div class="lights"><i></i><i></i><i></i></div>
+
+  <div class="proj-wrap">
+    <button class="proj" id="projBtn">
+      <span class="pm">m</span>
+      <span class="pn"><b>mysocial</b><span>3 accounts</span></span>
+      <svg class="ch" viewBox="0 0 24 24"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
+    </button>
+    <div class="popover" id="projPop">
+      <div class="pop-lbl">Projects</div>
+      <button class="pop-row on"><span class="sw" style="background:var(--amber)"></span><span class="lb">mysocial</span><svg class="tick" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></button>
+      <button class="pop-row"><span class="sw" style="background:#6E8C74"></span><span class="lb">Fretbase</span><svg class="tick" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></button>
+      <button class="pop-row"><span class="sw" style="background:#B4736C"></span><span class="lb">Personal brand</span><svg class="tick" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></button>
+      <div class="pop-sep"></div>
+      <button class="pop-row"><span class="sw" style="background:var(--ink-4)"></span><span class="lb">All projects</span><svg class="tick" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></button>
+      <div class="pop-sep"></div>
+      <button class="pop-row"><span class="sw" style="background:none;box-shadow:inset 0 0 0 1.2px var(--ink-4)"></span><span class="lb">New project…</span></button>
+      <button class="pop-row"><span class="sw" style="background:none;box-shadow:inset 0 0 0 1.2px var(--ink-4)"></span><span class="lb">Manage projects</span></button>
+    </div>
+  </div>
+
+  <div class="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input placeholder="Search everything" spellcheck="false"><kbd>⌘K</kbd>
+  </div>
+
+  <div class="scroll">
+    <button class="row on" data-go="queue">
+      <span class="gl"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+      <span class="lbl">Queue</span><span class="count">12</span>
+    </button>
+    <button class="row" data-go="library">
+      <span class="gl"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg></span>
+      <span class="lbl">Library</span><span class="count">84</span>
+    </button>
+    <button class="row" data-go="queue">
+      <span class="gl"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/></svg></span>
+      <span class="lbl">Notes &amp; ideas</span><span class="count">7</span>
+    </button>
+    <button class="row" data-go="queue">
+      <span class="gl"><svg viewBox="0 0 24 24"><path d="M15 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M15 4v5h5"/></svg></span>
+      <span class="lbl">Drafts</span><span class="count">4</span>
+    </button>
+    <button class="row" data-go="queue">
+      <span class="gl"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
+      <span class="lbl">Published</span><span class="count">68</span>
+    </button>
+
+    <div class="sec">Accounts</div>
+
+    <div class="plat">
+      <svg viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg><span>X</span>
+    </div>
+    <button class="row"><span class="av" data-p="x">M<i class="dot"></i></span><span class="lbl">@mysocialapp</span><span class="count">5</span></button>
+    <button class="row" title="Linked to all projects"><span class="av" data-p="x">K<i class="dot"></i></span><span class="lbl">@kartikbuilds</span><svg class="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg><span class="count">3</span></button>
+
+    <div class="plat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--ig)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5.4"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="var(--ig)" stroke="none"/></svg><span>Instagram</span>
+    </div>
+    <button class="row"><span class="av" data-p="ig">M<i class="dot"></i></span><span class="lbl">@mysocial.app</span><span class="count">2</span></button>
+
+    <div class="plat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--th)" stroke-width="2" stroke-linecap="round"><path d="M12.6 4C7.9 4 5.2 7.1 5.2 12s2.7 8 7.4 8c3.4 0 5.6-1.6 5.6-3.9 0-2-1.6-3.3-4.1-3.3-2 0-3.3.9-3.3 2.2 0 1 .8 1.6 1.9 1.6 1.6 0 2.6-1.3 2.6-3.4 0-2.6-1.8-4.5-4.4-4.5"/></svg><span>Threads</span>
+    </div>
+    <button class="row" title="Linked to all projects"><span class="av" data-p="th">K<i class="dot"></i></span><span class="lbl">@kartikbuilds</span><svg class="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg><span class="count">1</span></button>
+
+    <div class="plat">
+      <svg viewBox="0 0 24 24" fill="var(--li)"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5M3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.76-2.05 4.02 0 4.76 2.64 4.76 6.08V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.07 1.4-2.07 2.85V21H9z"/></svg><span>LinkedIn</span>
+    </div>
+    <button class="row" title="Linked to all projects"><span class="av" data-p="li">K<i class="dot off"></i></span><span class="lbl">Kartik Bandarwad</span><svg class="globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg><span class="count">1</span></button>
+
+    <button class="row addacct"><span class="gl"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="lbl">Add account…</span></button>
+  </div>
+
+  <div class="sidefoot">
+    <span class="pulse"></span>
+    <span class="t">Next post goes out<b>in 2h 14m</b></span>
+  </div>
+</aside>
+
+<!-- ══════════ QUEUE LIST ══════════ -->
+<section class="pane p-list">
+  <header class="bar">
+    <div class="ttl-wrap"><h1>Queue</h1><div class="sub">12 scheduled · mysocial</div></div>
+    <span class="grow"></span>
+    <div class="seg"><button class="on" data-mode="queue">List</button><button data-mode="calendar">Calendar</button></div>
+    <button class="icobtn acc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  </header>
+
+  <div class="feed">
+    <div class="day"><h2>Today</h2><span class="dt">SAT 25 JUL</span><span class="ln"></span></div>
+
+    <article class="card sel">
+      <div class="time">11:30</div>
+      <div>
+        <div class="who"><span class="h">@mysocialapp</span><span class="k">Thread · 5</span></div>
+        <div class="body">Most schedulers are built for teams of 30. I built one for a team of one — it runs on my Mac, stores nothing in the cloud, and costs $0/mo.</div>
+        <div class="strip"><i class="thumbA"></i><i class="thumbB"></i><i class="thumbC"></i><i class="thumbD"></i></div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+    </article>
+
+    <article class="card">
+      <div class="time">18:00</div>
+      <div>
+        <div class="who"><span class="h">@mysocial.app</span><span class="k">Carousel · 7</span></div>
+        <div class="body">7 things I got wrong building a native Mac app in Tauri — swipe for the ones that cost me a weekend.</div>
+        <div class="strip"><i class="thumbB"></i><i class="thumbD"></i><i class="thumbA"></i><span class="more">+4</span></div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="none" stroke="var(--ig)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5.4"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="var(--ig)" stroke="none"/></svg>
+    </article>
+
+    <article class="card">
+      <div class="time">21:15</div>
+      <div>
+        <div class="who"><span class="h">@kartikbuilds</span><span class="k">Post</span></div>
+        <div class="body">shipping something small every saturday is the only consistency hack that has ever worked for me</div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="none" stroke="var(--th)" stroke-width="2" stroke-linecap="round"><path d="M12.6 4C7.9 4 5.2 7.1 5.2 12s2.7 8 7.4 8c3.4 0 5.6-1.6 5.6-3.9 0-2-1.6-3.3-4.1-3.3-2 0-3.3.9-3.3 2.2 0 1 .8 1.6 1.9 1.6 1.6 0 2.6-1.3 2.6-3.4 0-2.6-1.8-4.5-4.4-4.5"/></svg>
+    </article>
+
+    <div class="day"><h2>Tomorrow</h2><span class="dt">SUN 26 JUL</span><span class="ln"></span></div>
+
+    <article class="card">
+      <div class="time">09:00</div>
+      <div>
+        <div class="who"><span class="h">@mysocialapp</span><span class="k">Post</span></div>
+        <div class="body">Local-first means your drafts survive the company that made the app. Screenshot of the SQLite file, because that's the whole backend.</div>
+        <div class="strip"><i class="thumbC"></i></div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+    </article>
+
+    <article class="card draft">
+      <div class="time na">—</div>
+      <div>
+        <div class="who"><span class="h">Kartik Bandarwad</span><span class="k warn">Needs a time</span></div>
+        <div class="body">Why I stopped paying $49/mo for a social scheduler and spent three weekends instead…</div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="var(--li)"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5M3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.76-2.05 4.02 0 4.76 2.64 4.76 6.08V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.07 1.4-2.07 2.85V21H9z"/></svg>
+    </article>
+
+    <div class="day"><h2>Monday</h2><span class="dt">27 JUL</span><span class="ln"></span></div>
+
+    <article class="card">
+      <div class="time">08:30</div>
+      <div>
+        <div class="who"><span class="h">@kartikbuilds</span><span class="k">Post</span></div>
+        <div class="body">week 12 of building in public. revenue: $0. lessons: several. still going.</div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+    </article>
+
+    <article class="card">
+      <div class="time">19:00</div>
+      <div>
+        <div class="who"><span class="h">@mysocial.app</span><span class="k">Reel</span></div>
+        <div class="body">30-second screen recording: idea → scheduled post in four keystrokes.</div>
+        <div class="strip"><i class="thumbD"></i></div>
+      </div>
+      <svg class="pgl" viewBox="0 0 24 24" fill="none" stroke="var(--ig)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5.4"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="var(--ig)" stroke="none"/></svg>
+    </article>
+  </div>
+</section>
+
+<!-- ══════════ COMPOSER ══════════ -->
+<section class="pane p-comp">
+  <div class="ctop">
+    <span class="lb">Posting to</span>
+    <button class="chip on"><span class="av" data-p="x">M</span>@mysocialapp</button>
+    <button class="chip"><span class="av" data-p="th">K</span>@kartikbuilds</button>
+    <button class="chip add">+ account</button>
+    <span class="grow"></span>
+    <button class="icobtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg></button>
+  </div>
+
+  <div class="sheet">
+    <div class="inner">
+      <input class="ttl" value="Local-first launch thread" spellcheck="false">
+
+      <div class="part on">
+        <textarea class="write" rows="4" spellcheck="false">Most schedulers are built for teams of 30.
+
+I built one for a team of one — it runs on my Mac, stores nothing in the cloud, and costs $0/mo.
+
+Here's how it works →</textarea>
+        <div class="media">
+          <div class="mtile thumbA"><span>01</span></div>
+          <div class="mtile thumbB"><span>02</span></div>
+          <div class="mtile thumbC"><span>03</span></div>
+          <div class="mtile thumbD"><span>04</span></div>
+          <button class="mtile add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+        <div class="meta"><span>1 / 5</span><span>184 chars</span><span>4 images</span></div>
+      </div>
+
+      <div class="part">
+        <textarea class="write" rows="2" spellcheck="false">1. Everything lives in one SQLite file on disk. No account, no sync, no server that can shut down.</textarea>
+        <div class="meta"><span>2 / 5</span><span>97 chars</span></div>
+      </div>
+
+      <div class="part">
+        <textarea class="write" rows="2" spellcheck="false">2. Multiple accounts per platform, because I run a product handle and a personal one and I'm tired of logging out.</textarea>
+        <div class="meta"><span>3 / 5</span><span>112 chars</span></div>
+      </div>
+
+      <button class="addpart"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add to thread</button>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="when">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span class="mono">Today · 11:30</span>
+    </button>
+    <div class="ring"><svg viewBox="0 0 26 26"><circle class="bg" cx="13" cy="13" r="11"/><circle class="fg" cx="13" cy="13" r="11"/></svg><b>66</b></div>
+    <span class="grow"></span>
+    <button class="btn ghost">Save draft</button>
+    <button class="btn solid">Schedule<kbd>⌘⏎</kbd></button>
+  </div>
+</section>
+
+<!-- ══════════ CALENDAR ══════════ -->
+<section class="pane p-cal">
+  <header class="bar">
+    <div class="ttl-wrap"><h1>July 2026</h1><div class="sub">12 scheduled · mysocial</div></div>
+    <span class="grow"></span>
+    <button class="icobtn"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="btn ghost" style="padding:5px 11px">Today</button>
+    <button class="icobtn"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div class="seg"><button data-mode="queue">List</button><button class="on" data-mode="calendar">Calendar</button></div>
+    <button class="icobtn acc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  </header>
+  <div class="calwrap">
+    <div class="dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="cal" id="cal"></div>
+  </div>
+</section>
+
+<!-- ══════════ LIBRARY ══════════ -->
+<section class="pane p-lib">
+  <header class="bar">
+    <div class="ttl-wrap"><h1>Library</h1><div class="sub">84 items · mysocial</div></div>
+    <span class="grow"></span>
+    <div class="search" style="margin:0;width:200px"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input placeholder="Filter" spellcheck="false"></div>
+    <div class="seg"><button class="on">Grid</button><button>List</button></div>
+    <button class="icobtn acc"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  </header>
+  <div class="filters">
+    <button class="fchip on">All<span class="c">84</span></button>
+    <button class="fchip">Posts<span class="c">31</span></button>
+    <button class="fchip">Threads<span class="c">12</span></button>
+    <button class="fchip">Carousels<span class="c">18</span></button>
+    <button class="fchip">Reels<span class="c">6</span></button>
+    <button class="fchip">Images<span class="c">10</span></button>
+    <button class="fchip">Notes<span class="c">7</span></button>
+  </div>
+  <div class="gal" id="gal"></div>
+</section>
+
+<!-- ══════════ INSPECTOR ══════════ -->
+<aside class="pane p-insp">
+  <header class="bar" style="padding-left:18px">
+    <div class="ttl-wrap"><h1 style="font-size:14px">Details</h1></div>
+    <span class="grow"></span>
+    <button class="icobtn"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </header>
+  <div class="ibody">
+    <div class="ihero thumbA"><span class="kd">Carousel · 7</span></div>
+    <div class="ititle">7 things I got wrong building a Mac app in Tauri</div>
+    <div class="irow"><span>Account</span><span class="val"><span class="av" data-p="ig">M</span>@mysocial.app</span></div>
+    <div class="irow"><span>Project</span><span class="val">mysocial</span></div>
+    <div class="irow"><span>Status</span><span class="val" style="color:var(--amber)">Scheduled</span></div>
+    <div class="irow"><span>Goes out</span><b>25 Jul · 18:00</b></div>
+    <div class="irow"><span>Slides</span><b>7</b></div>
+    <div class="irow"><span>Created</span><b>19 Jul 2026</b></div>
+    <div class="irow"><span>Folder</span><b>Launch week</b></div>
+  </div>
+  <div class="ifoot">
+    <button class="btn ghost" style="box-shadow:0 0 0 .5px var(--rule-2)">Duplicate</button>
+    <button class="btn solid">Open</button>
+  </div>
+</aside>
+
+</div>
+
+<div class="hint">concept v4 — click the sidebar, the project switcher, List / Calendar, and the phone icon</div>
+
+<script>
+const win = document.querySelector('.win');
+
+/* project switcher */
+const pb = document.getElementById('projBtn'), pp = document.getElementById('projPop');
+pb.onclick = e => { e.stopPropagation(); pp.classList.toggle('open'); };
+document.addEventListener('click', () => pp.classList.remove('open'));
+pp.onclick = e => e.stopPropagation();
+pp.querySelectorAll('.pop-row').forEach(r => r.onclick = () => {
+  if (!r.querySelector('.tick')) return;
+  pp.querySelectorAll('.pop-row').forEach(x => x.classList.remove('on'));
+  r.classList.add('on');
+  const name = r.querySelector('.lb').textContent;
+  pb.querySelector('.pn b').textContent = name;
+  pb.querySelector('.pm').textContent = name === 'All projects' ? '◇' : name[0].toLowerCase();
+  document.querySelectorAll('.bar .sub').forEach(s => s.textContent = s.textContent.replace(/·.*$/, '· ' + name));
+  pp.classList.remove('open');
+});
+
+/* sidebar nav */
+document.querySelectorAll('.scroll .row[data-go]').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.scroll .row').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  win.dataset.view = b.dataset.go;
+});
+
+/* list ⇄ calendar */
+document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
+  win.dataset.view = b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x.dataset.mode === b.dataset.mode));
+});
+
+/* build calendar — July 2026, Mon-start; 1 Jul 2026 is a Wednesday */
+const evs = {
+  1:[['09:00','x','M','Teaser: one file backend']],
+  3:[['18:00','ig','M','Behind the build']],
+  6:[['08:30','x','K','week 11 recap']],
+  8:[['12:00','th','K','local-first rant'],['19:00','ig','M','Carousel: 5 Tauri gotchas']],
+  10:[['09:00','x','M','Ship note']],
+  13:[['08:30','x','K','week 12 recap']],
+  15:[['17:00','ig','M','Reel: 30s demo']],
+  17:[['11:00','li','K','Long-form article']],
+  20:[['08:30','x','K','week 13 recap'],['18:00','th','K','building in public']],
+  22:[['12:30','ig','M','Carousel: pricing']],
+  25:[['11:30','x','M','Launch thread'],['18:00','ig','M','7 things I got wrong'],['21:15','th','K','saturday shipping']],
+  26:[['09:00','x','M','Local-first means…']],
+  27:[['08:30','x','K','week 12 in public'],['19:00','ig','M','Reel: idea → scheduled']],
+  29:[['10:00','li','K','Draft — needs a time',1]],
+  31:[['16:00','x','M','Month wrap']]
+};
+const cal = document.getElementById('cal');
+let html = '';
+for (let i = 29; i <= 30; i++) html += `<div class="cell out"><span class="dn">${i}</span></div>`;
+for (let d = 1; d <= 31; d++) {
+  const list = evs[d] || [];
+  const shown = list.slice(0, 2).map(([t, p, a, x, dr]) =>
+    `<div class="ev${dr ? ' dr' : ''}"><span class="av" data-p="${p}">${a}</span><span class="tm">${t}</span><span class="tx">${x}</span></div>`).join('');
+  const extra = list.length > 2 ? `<span class="more-ev">+${list.length - 2} more</span>` : '';
+  html += `<div class="cell${d === 25 ? ' today' : ''}"><span class="dn">${d}</span>${shown}${extra}</div>`;
+}
+for (let i = 1; i <= 4; i++) html += `<div class="cell out"><span class="dn">${i}</span></div>`;
+cal.innerHTML = html;
+
+/* ── build library gallery ──────────────────────────────────────────────
+   Every tile's height comes from what the content actually IS. Text posts are
+   typography on paper — they never get a fake gradient standing in for an
+   image. Media keeps its real crop. Tiles are packed into balanced columns. */
+const G = ['thumbA','thumbB','thumbC','thumbD','thumbE','thumbF'];
+const X_GL  = '<svg class="glyph" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>';
+const TH_GL = '<svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="var(--th)" stroke-width="2" stroke-linecap="round"><path d="M12.6 4C7.9 4 5.2 7.1 5.2 12s2.7 8 7.4 8c3.4 0 5.6-1.6 5.6-3.9 0-2-1.6-3.3-4.1-3.3-2 0-3.3.9-3.3 2.2 0 1 .8 1.6 1.9 1.6 1.6 0 2.6-1.3 2.6-3.4 0-2.6-1.8-4.5-4.4-4.5"/></svg>';
+const PLAY  = '<span class="play"><svg viewBox="0 0 24 24"><path d="M6 3l15 9-15 9z"/></svg></span>';
+
+/* kind → [ratio class, height weight used for column packing] */
+const RATIO = {
+  reel:     ['r-reel',     1.78],
+  carousel: ['r-carousel', 1.25],
+  square:   ['r-square',   1.00],
+  photo:    ['r-photo',    1.33],
+  land:     ['r-land',     0.67],
+};
+
+const items = [
+  {k:'carousel', acct:'@mysocial.app',    p:'ig', g:0, slides:7, txt:'7 things I got wrong building a native Mac app in Tauri', d:'25 Jul', sel:1},
+  {k:'thread',   acct:'@mysocialapp',     p:'x',           parts:5, txt:'Most schedulers are built for teams of 30. I built one for a team of one — it runs on my Mac and costs $0/mo.', d:'25 Jul'},
+  {k:'reel',     acct:'@mysocial.app',    p:'ig', g:3, dur:'0:30', txt:'Idea → scheduled post in four keystrokes', d:'27 Jul'},
+  {k:'post',     acct:'@kartikbuilds',    p:'th',          txt:'shipping something small every saturday is the only consistency hack that has ever worked for me', d:'25 Jul'},
+  {k:'note',     txt:'Angle worth testing: nobody talks about what happens to your drafts when the SaaS shuts down. Lead with the SQLite file.', d:'21 Jul'},
+  {k:'carousel', acct:'@mysocial.app',    p:'ig', g:1, slides:5, txt:'Pricing page teardown: why I charge nothing', d:'22 Jul'},
+  {k:'article',  acct:'Kartik Bandarwad', p:'li', g:5, src:'LinkedIn · 6 min', txt:'Why I stopped paying $49/mo for a social scheduler', d:'29 Jul'},
+  {k:'post',     acct:'@mysocialapp',     p:'x',           txt:'Local-first means your drafts survive the company that made the app.', d:'26 Jul'},
+  {k:'image',    acct:'@mysocial.app',    p:'ig', g:2, shape:'square', txt:'App icon exploration, round 3', d:'18 Jul'},
+  {k:'note',     txt:'Todo — record the 30s demo before Friday. Needs a clean desktop and a fake dataset.', d:'20 Jul'},
+  {k:'thread',   acct:'@kartikbuilds',    p:'x',           parts:8, txt:'week 12 of building in public. revenue: $0. lessons: several. still going.', d:'27 Jul'},
+  {k:'carousel', acct:'@mysocial.app',    p:'ig', g:4, slides:4, txt:'Three months of building, in screenshots', d:'16 Jul'},
+  {k:'image',    acct:'@kartikbuilds',    p:'x',  g:1, shape:'land', txt:'Benchmark chart for the launch post', d:'14 Jul'},
+  {k:'reel',     acct:'@mysocial.app',    p:'ig', g:2, dur:'0:14', txt:'Calendar drag-and-drop, slowed down', d:'12 Jul'},
+];
+
+const cap = it => `<div class="cap">${it.p ? `<span class="av" data-p="${it.p}">${it.acct[1].toUpperCase()}</span>` : ''}<span class="t">${it.k === 'note' ? 'Idea' : it.acct}</span><span class="d">${it.d}</span></div>`;
+
+function render(it, i) {
+  const sel = it.sel ? ' sel' : '';
+  switch (it.k) {
+
+    case 'thread': case 'post': {
+      const glyph = it.p === 'x' ? X_GL : TH_GL;
+      const parts = it.parts ? `<span class="parts">${it.parts} parts</span>` : '';
+      return `<button class="tile${sel}"><div class="txtcard">${glyph}<div class="q">${it.txt}</div>${parts}</div>${cap(it)}</button>`;
+    }
+
+    case 'note':
+      return `<button class="tile${sel}"><div class="notecard"><div class="lbl">Idea</div><div class="q">${it.txt}</div></div>${cap(it)}</button>`;
+
+    case 'article':
+      return `<button class="tile${sel}"><div class="artcard"><div class="hero ${G[it.g]}"></div><div class="b"><h3>${it.txt}</h3><div class="src">${it.src}</div></div></div>${cap(it)}</button>`;
+
+    case 'reel': {
+      const [r] = RATIO.reel;
+      return `<button class="tile${sel}"><div class="m ${r} ${G[it.g]}"><span class="kd">Reel</span>${PLAY}<div class="scrim"></div><span class="dur">${it.dur}</span><div class="mtxt">${it.txt}</div></div>${cap(it)}</button>`;
+    }
+
+    case 'carousel': {
+      const [r] = RATIO.carousel;
+      return `<button class="tile stack${sel}"><span class="edge one"></span><span class="edge two"></span><div class="m ${r} ${G[it.g]}"><span class="kd">${it.slides} slides</span><div class="scrim"></div><div class="mtxt">${it.txt}</div></div>${cap(it)}</button>`;
+    }
+
+    default: { /* image */
+      const [r] = RATIO[it.shape];
+      return `<button class="tile${sel}"><div class="m ${r} ${G[it.g]}"><span class="kd">Image</span><div class="scrim"></div><div class="mtxt">${it.txt}</div></div>${cap(it)}</button>`;
+    }
+  }
+}
+
+/* rough height weight per item, for balancing the columns */
+function weight(it) {
+  if (it.k === 'thread' || it.k === 'post') return 0.30 + it.txt.length / 320 + (it.parts ? 0.14 : 0);
+  if (it.k === 'note')    return 0.32 + it.txt.length / 320;
+  if (it.k === 'article') return 0.5625 + 0.40;
+  if (it.k === 'image')   return RATIO[it.shape][1];
+  return RATIO[it.k][1];
+}
+
+const gal = document.getElementById('gal');
+function layout() {
+  const n = Math.max(2, Math.min(5, Math.floor(gal.clientWidth / 232)));
+  const cols = Array.from({length: n}, () => ({h: 0, html: ''}));
+  items.forEach((it, i) => {
+    const c = cols.reduce((a, b) => (b.h < a.h ? b : a));
+    c.html += render(it, i);
+    c.h += weight(it) + 0.16;           // + caption row
+  });
+  gal.innerHTML = cols.map(c => `<div class="galcol">${c.html}</div>`).join('');
+}
+layout();
+new ResizeObserver(layout).observe(gal);
+</script>
+</body>
+</html>

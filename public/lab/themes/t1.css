@@ -1,0 +1,139 @@
+/* ═══ T1 · ALUMINIUM — the Mac canon, played straight ═══════════════════════
+   System stack, cool neutrals, one system blue, vibrancy behind rails,
+   hairlines, shadow only where a real surface sits above another. The control:
+   if a theme cannot beat a well-built native Mac app, it is decoration.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.stage[data-theme="t1"] {
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --display: var(--ui);
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--ui);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ground) 88%, #fff), var(--ground) 42%);
+}
+.stage[data-theme="t1"] .meta, .stage[data-theme="t1"] .time,
+.stage[data-theme="t1"] .stime, .stage[data-theme="t1"] .evt { font-family: var(--mono); }
+
+.stage[data-theme="t1"] .side, .stage[data-theme="t1"] .spine {
+  background: color-mix(in srgb, var(--side-bg) 82%, transparent);
+  backdrop-filter: blur(var(--vibrancy)) saturate(1.7);
+  border-right: 1px solid var(--rule);
+}
+.stage[data-theme="t1"] .pane { background: var(--raised); }
+.stage[data-theme="t1"] .composer, .stage[data-theme="t1"] .inspector { border-left: 1px solid var(--rule); }
+.stage[data-theme="t1"] .gallery { background: color-mix(in srgb, var(--ground) 55%, var(--raised)); }
+.stage[data-theme="t1"] .bar, .stage[data-theme="t1"] .cmdbar {
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--raised) 86%, transparent);
+  backdrop-filter: blur(20px);
+}
+.stage[data-theme="t1"] .ttl h1, .stage[data-theme="t1"] .ctitle,
+.stage[data-theme="t1"] .idea h1 { letter-spacing: -.018em; }
+
+.stage[data-theme="t1"] :is(.proj, .lrow, .arow, .scard, .unrow, .icobtn, .ev, .tcard):hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+.stage[data-theme="t1"] .pmark { background: var(--accent); color: #fff; }
+.stage[data-theme="t1"] .field { background: color-mix(in srgb, var(--ink) 6%, transparent); box-shadow: inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t1"] :is(.lrow, .scard).on { background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink); font-weight: 500; }
+
+.stage[data-theme="t1"] .av[data-platform="x"] { background: #1d1d1f; color: #fff; }
+.stage[data-theme="t1"] .av[data-platform="instagram"] { background: #c1387a; color: #fff; }
+.stage[data-theme="t1"] .av[data-platform="threads"] { background: #4a4a4f; color: #fff; }
+.stage[data-theme="t1"] .av[data-platform="linkedin"] { background: #0a66c2; color: #fff; }
+.stage[data-theme="t1"] .av[data-platform="reddit"] { background: #d93a00; color: #fff; }
+
+.stage[data-theme="t1"] .seg { box-shadow: inset 0 0 0 1px var(--rule); background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t1"] .seg button.on { background: var(--raised); color: var(--ink); box-shadow: var(--lift); font-weight: 500; }
+.stage[data-theme="t1"] .icobtn.acc { background: var(--accent); color: #fff; box-shadow: var(--lift); }
+.stage[data-theme="t1"] .btn { box-shadow: inset 0 0 0 1px var(--rule-2), var(--lift); background: var(--raised); }
+.stage[data-theme="t1"] :is(.btn, .verb).pri { background: var(--accent); color: #fff; box-shadow: var(--lift); }
+.stage[data-theme="t1"] .verb { box-shadow: inset 0 0 0 1px var(--rule-2); background: var(--raised); }
+.stage[data-theme="t1"] .verb.pri kbd { background: rgb(255 255 255 / .22); color: #fff; }
+.stage[data-theme="t1"] .verb.ghost { box-shadow: none; color: var(--ink-3); }
+
+.stage[data-theme="t1"] .day, .stage[data-theme="t1"] .sdiv {
+  background: linear-gradient(var(--raised) 74%, transparent); backdrop-filter: blur(6px);
+}
+.stage[data-theme="t1"] .win[data-flow="stream"] .sdiv { background: linear-gradient(var(--ground) 74%, transparent); }
+.stage[data-theme="t1"] .row.card { transition: background calc(var(--t) * .12); }
+.stage[data-theme="t1"] .row:hover, .stage[data-theme="t1"] .srowhead:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t1"] .k { padding: 1px 6px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.stage[data-theme="t1"] .k.warn { background: var(--acc-wash); color: var(--accent); }
+
+.stage[data-theme="t1"][data-sel="fill"] [data-sel] { background: var(--accent); }
+.stage[data-theme="t1"][data-sel="fill"] [data-sel] :is(.body, .h, .k, .time, .pgl, .more, .evt, .evb, .evn) { color: #fff; }
+.stage[data-theme="t1"][data-sel="fill"] [data-sel] .k { background: rgb(255 255 255 / .2); }
+.stage[data-theme="t1"][data-sel="rail"] [data-sel] { background: var(--acc-wash); box-shadow: inset 2px 0 0 var(--accent); }
+.stage[data-theme="t1"][data-sel="outline"] [data-sel] { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.stage[data-theme="t1"][data-sel="invert"] [data-sel] { background: var(--ink); }
+.stage[data-theme="t1"][data-sel="invert"] [data-sel] :is(.body, .h, .k, .time, .pgl, .evt, .evb) { color: var(--ground); }
+
+.stage[data-theme="t1"] .chip { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.stage[data-theme="t1"] .chip.on { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--ink); }
+.stage[data-theme="t1"] .chip.add { box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t1"] .part.live .pdot { background: var(--accent); }
+.stage[data-theme="t1"] .dock, .stage[data-theme="t1"] .statusline, .stage[data-theme="t1"] .tray {
+  border-top: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--raised) 88%, transparent); backdrop-filter: blur(20px);
+}
+.stage[data-theme="t1"] .sched { background: var(--acc-wash); color: var(--accent); }
+.stage[data-theme="t1"] .sched.ghost { background: none; box-shadow: inset 0 0 0 1px var(--rule-2); color: var(--ink-3); }
+.stage[data-theme="t1"] .nextdue { border-top: 1px solid var(--rule); }
+
+/* stream */
+.stage[data-theme="t1"] .cmd { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule-2), var(--lift); }
+.stage[data-theme="t1"] .srow.open { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+
+/* timeline */
+.stage[data-theme="t1"] .gridhead { background: color-mix(in srgb, var(--raised) 92%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t1"] .dhead.today b { color: var(--accent); }
+.stage[data-theme="t1"] .lane { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t1"] .lanelab { border-right: 1px solid var(--rule); }
+.stage[data-theme="t1"] .cell + .cell, .stage[data-theme="t1"] .dhead + .dhead { box-shadow: inset 1px 0 0 var(--rule); }
+.stage[data-theme="t1"] .cell.today { background: var(--acc-wash); }
+.stage[data-theme="t1"] .cell.empty::after { content: ""; }
+.stage[data-theme="t1"] .ev { background: var(--raised); box-shadow: var(--lift), inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t1"] .ev[data-status="failed"] { box-shadow: inset 0 0 0 1.5px #d9503f; }
+.stage[data-theme="t1"] .tcard { background: var(--raised); box-shadow: var(--lift), inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t1"] .tcard.add { box-shadow: inset 0 0 0 1px var(--rule-2); background: none; }
+
+/* desk */
+.stage[data-theme="t1"] .vcard { background: var(--raised); box-shadow: var(--lift), inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t1"] .vhead { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t1"] .vfoot { border-top: 1px solid var(--rule); }
+.stage[data-theme="t1"] .vcard[data-status="idea"] { background: none; box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t1"] .todo .box { box-shadow: inset 0 0 0 1.5px var(--rule-2); }
+.stage[data-theme="t1"] .todo.done .box { background: var(--accent); color: #fff; box-shadow: none; }
+
+/* triage */
+.stage[data-theme="t1"] .focus { background: var(--raised); box-shadow: var(--pop), inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t1"] .why { color: var(--accent); }
+.stage[data-theme="t1"] [data-urgency="problem"] .why { color: #d9503f; }
+.stage[data-theme="t1"] [data-urgency="stale"] .why { color: #a5791d; }
+.stage[data-theme="t1"] [data-urgency="gap"] .why { color: #3f77bd; }
+.stage[data-theme="t1"] .unrow:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+
+/* library */
+.stage[data-theme="t1"] :is(.frame, .ihero) { box-shadow: var(--lift); }
+.stage[data-theme="t1"] .txt { background: var(--raised); box-shadow: var(--lift); }
+.stage[data-theme="t1"] .txt.note { background: color-mix(in srgb, var(--accent) 7%, var(--raised)); }
+.stage[data-theme="t1"] .txt.note .lab { color: var(--accent); }
+.stage[data-theme="t1"] .artbody { background: var(--raised); box-shadow: var(--lift); border-radius: 0 0 var(--radius) var(--radius); }
+.stage[data-theme="t1"] .tile[data-kind="article"] .frame { border-radius: var(--radius) var(--radius) 0 0; }
+.stage[data-theme="t1"] .edge { background: color-mix(in srgb, var(--ink) 18%, var(--raised)); box-shadow: var(--lift); }
+.stage[data-theme="t1"] .pill { background: rgb(0 0 0 / .55); color: #fff; backdrop-filter: blur(8px); }
+.stage[data-theme="t1"] .scrim { background: linear-gradient(transparent, rgb(0 0 0 / .62)); }
+.stage[data-theme="t1"] .fchip { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.stage[data-theme="t1"] .fchip.on { background: var(--accent); color: #fff; }
+.stage[data-theme="t1"] .fchip.on .c { color: rgb(255 255 255 / .7); }
+.stage[data-theme="t1"] .ph { background: linear-gradient(150deg, #b9c0cc, #8d95a4); }
+.stage[data-theme="t1"] .ph[data-tone="1"] { background: linear-gradient(150deg, #a8b4c6, #6d798c); }
+.stage[data-theme="t1"] .ph[data-tone="2"] { background: linear-gradient(150deg, #cbbcc4, #9a8892); }
+.stage[data-theme="t1"] .ph[data-tone="3"] { background: linear-gradient(150deg, #c3c7b8, #8e937f); }
+.stage[data-theme="t1"] .ph[data-tone="4"] { background: linear-gradient(150deg, #b0bfc8, #79909c); }
+.stage[data-theme="t1"] .ph[data-tone="5"] { background: linear-gradient(150deg, #cdc6bb, #98907f); }
+.stage[data-theme="t1"] .ph[data-tone="6"] { background: linear-gradient(150deg, #b7aec6, #82789a); }
+.stage[data-theme="t1"] .ph[data-tone="7"] { background: linear-gradient(150deg, #c9c3ad, #948d74); }
+.stage[data-theme="t1"] .ph[data-tone="8"] { background: linear-gradient(150deg, #bcc9c4, #85958f); }
+.stage[data-theme="t1"] .ph[data-tone="9"] { background: linear-gradient(150deg, #c4bcc9, #8d8399); }

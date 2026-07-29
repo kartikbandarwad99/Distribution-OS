@@ -1,0 +1,1761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Distribution OS — v5</title>
+
+<!--
+  ════════════════════════════════════════════════════════════════════════════
+  DISTRIBUTION OS · v5 — the merge.
+
+  Assembled from the parts of the lab that survived judgement:
+
+    from F1 CLASSIC   Assets (one store, used everywhere) · Library · Calendar
+    from F2 STUDIO    Gates, promoted into real Analytics · the Long room
+    from F3 CHANNELS  the channel Wall · One channel · the week board
+
+  SPINE. Places, but only six of them, and each place answers one question.
+    Plan       when does it go out            kanban ⇄ calendar, one toggle
+    Library    what already went out
+    Articles   the long-form room             list of cards → one long room
+    Assets     what everything is made of
+    Analytics  what any of it earned          wall of channels → one channel
+
+  THE CHANNEL IS THE COLOUR. Every account carries one tint, derived from its
+  platform and shaded per handle. That tint is the only way a calendar chip, a
+  kanban card, a lane and an analytics tile ever say "this is @validate.app"
+  without spelling it out. Eleven accounts, eleven tints, one legend.
+
+  MATERIAL. T6 Classical, dialled down. Garamond for reading matter, Public
+  Sans for chrome, Azeret for numbers, rubric red used as a mark and never as a
+  fill. Paper is #f7f6f3. Charts are smoothed monotone cubics on hairline
+  grids — macOS soft, not dashboard-sharp.
+
+  This is a static design target. Nothing here is wired.
+  ════════════════════════════════════════════════════════════════════════════
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Public+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   1 · TOKENS
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --paper:    #f7f6f3;
+  --card:     #ffffff;
+  --side:     #f2f1ec;
+  --sunk:     #eeece6;
+
+  --ink:      #23252b;
+  --ink-2:    color-mix(in srgb, var(--ink) 64%, var(--paper));
+  --ink-3:    color-mix(in srgb, var(--ink) 44%, var(--paper));
+  --ink-4:    color-mix(in srgb, var(--ink) 27%, var(--paper));
+  --rule:     color-mix(in srgb, var(--ink) 9%, transparent);
+  --rule-2:   color-mix(in srgb, var(--ink) 16%, transparent);
+
+  --rubric:   #a3271e;
+  --good:     #2e7d63;
+  --warn:     #b4571f;
+
+  --ui:      "EB Garamond", Georgia, serif;
+  --sans:    "Public Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono:    "Azeret Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --f-2: 10px; --f-1: 11.5px; --f0: 13px; --f1: 16px; --f2: 20.5px; --f3: 26px; --f4: 33px;
+
+  --r:   7px;
+  --r-l: 11px;
+  --lift: 0 1px 1.5px rgb(35 37 43 / .05), 0 4px 14px -6px rgb(35 37 43 / .13);
+  --pop:  0 2px 5px rgb(35 37 43 / .07), 0 22px 46px -16px rgb(35 37 43 / .30);
+
+  --side-w: 232px;
+  --bar-h:  54px;
+  --t: .19s cubic-bezier(.32,.72,.28,1);
+}
+
+/* channel tints — platform base, shaded per handle */
+:root {
+  --p-x:         #33363d;
+  --p-instagram: #a8577a;
+  --p-medium:    #2f7355;
+  --p-linkedin:  #35618c;
+  --p-threads:   #6d4f96;
+  --p-reddit:    #bf5327;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font: inherit; color: inherit; background: none; border: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; text-align: left; }
+svg { display: block; flex: 0 0 auto; }
+::selection { background: color-mix(in srgb, var(--rubric) 22%, transparent); }
+
+html, body { height: 100%; }
+body {
+  font-family: var(--ui);
+  font-size: var(--f0);
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2 · TYPE VOCABULARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.sans, .btn, .seg button, .chip, .fchip, .k, .sechead, .lbl, .tag, .col-h, .th,
+.pend, .hchip, .ahead, .lanelab .ah, .kbd, .navrow, .stat-k, .legend, .dhead b { font-family: var(--sans); }
+
+.meta, .num, .time, .mono, .stat-v, .tnum, .evt, .cd { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.meta { font-size: var(--f-1); color: var(--ink-3); letter-spacing: -.01em; }
+
+.sechead {
+  font-size: var(--f-2); letter-spacing: .13em; text-transform: uppercase;
+  font-weight: 600; color: var(--ink-4);
+  display: flex; align-items: center; gap: 8px;
+}
+.sechead .meta { text-transform: none; letter-spacing: 0; font-size: var(--f-2); }
+.sechead .ln { flex: 1; height: 1px; background: var(--rule); }
+
+h1 { font-size: var(--f2); font-weight: 500; letter-spacing: -.004em; line-height: 1.12; }
+h2 { font-size: var(--f1); font-weight: 500; }
+.ttl .sub { font-family: var(--sans); font-size: var(--f-1); color: var(--ink-3); margin-top: 2px; }
+.grow { flex: 1 1 auto; min-width: 0; }
+.k {
+  font-size: var(--f-2); letter-spacing: .05em; color: var(--ink-4);
+  text-transform: uppercase; font-weight: 600; flex: 0 0 auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3 · CONTROLS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  padding: 6px 13px; border-radius: var(--r); font-size: var(--f-1); font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--rule-2); color: var(--ink-2);
+  transition: background var(--t), box-shadow var(--t);
+}
+.btn:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink); }
+.btn.pri { background: var(--ink); color: var(--paper); box-shadow: none; }
+.btn.pri:hover { background: color-mix(in srgb, var(--ink) 86%, #000); color: var(--paper); }
+.btn.ghost { box-shadow: none; color: var(--ink-3); }
+.btn kbd { font-family: var(--mono); font-size: var(--f-2); opacity: .6; margin-left: 3px; }
+
+.icobtn {
+  width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto;
+  border-radius: var(--r); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule-2);
+  transition: background var(--t);
+}
+.icobtn:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.icobtn.acc { background: var(--ink); color: var(--paper); box-shadow: none; }
+.icobtn.bare { box-shadow: none; }
+
+.seg {
+  display: inline-flex; flex: 0 0 auto; padding: 2px; gap: 2px;
+  border-radius: calc(var(--r) + 2px); background: color-mix(in srgb, var(--ink) 5%, transparent);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.seg button {
+  padding: 4px 11px; border-radius: var(--r); font-size: var(--f-1); font-weight: 600;
+  color: var(--ink-3); transition: background var(--t), color var(--t), box-shadow var(--t);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.seg button:hover { color: var(--ink); }
+.seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--lift); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  padding: 3px 9px; border-radius: 999px; font-size: var(--f-1);
+  box-shadow: inset 0 0 0 1px var(--rule-2); color: var(--ink-2);
+}
+.chip.on { box-shadow: inset 0 0 0 1px var(--ink-3); color: var(--ink); }
+
+.fchip {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  padding: 4px 11px; border-radius: 999px; font-size: var(--f-1); font-weight: 500;
+  color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--rule);
+  transition: background var(--t), box-shadow var(--t), color var(--t);
+}
+.fchip:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.fchip .c { font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.fchip.on { background: var(--ink); color: var(--paper); box-shadow: none; }
+.fchip.on .c { color: color-mix(in srgb, var(--paper) 66%, var(--ink)); }
+
+.field {
+  display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: var(--r);
+  color: var(--ink-3); background: color-mix(in srgb, var(--ink) 4%, transparent);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.field input { flex: 1; min-width: 0; font-size: var(--f0); color: var(--ink); outline: 0; }
+.field input::placeholder { color: var(--ink-4); }
+.field kbd { font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.field.sm { padding: 4px 8px; font-size: var(--f-1); }
+.field.sm input { font-size: var(--f-1); }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto;
+  padding: 2px 8px; border-radius: 4px; font-size: var(--f-2); font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+}
+.tag.draft     { color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--rule-2); }
+.tag.scheduled { color: var(--rubric); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rubric) 34%, transparent); }
+.tag.published { color: var(--good); background: color-mix(in srgb, var(--good) 11%, transparent); }
+.tag.idea      { color: var(--warn); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn) 30%, transparent); }
+
+.hchip {
+  display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto;
+  padding: 2px 7px; border-radius: 999px; font-size: var(--f-2); font-weight: 600;
+  font-family: var(--sans);
+}
+.hchip.ok   { color: var(--good);   background: color-mix(in srgb, var(--good) 11%, transparent); }
+.hchip.warn { color: var(--warn);   background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.hchip.bad  { color: var(--rubric); background: color-mix(in srgb, var(--rubric) 11%, transparent); }
+.hchip.off  { color: var(--ink-4);  background: color-mix(in srgb, var(--ink) 6%, transparent); }
+
+.delta { font-family: var(--mono); font-size: var(--f-2); display: inline-flex; align-items: center; gap: 2px; }
+.delta.up   { color: var(--good); }
+.delta.dn   { color: var(--rubric); }
+.delta.flat { color: var(--ink-4); }
+
+/* avatars & platform glyphs */
+.av {
+  position: relative; width: 20px; height: 20px; flex: 0 0 auto;
+  display: grid; place-items: center; border-radius: 50%;
+  font-family: var(--ui); font-size: var(--f-1); font-weight: 600;
+  background: var(--ch, var(--ink-4)); color: #fff;
+}
+.av.lg { width: 40px; height: 40px; font-size: var(--f1); }
+.av.sm { width: 15px; height: 15px; font-size: var(--f-2); }
+.av .dot { position: absolute; right: -1px; bottom: -1px; width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 1.6px var(--card); }
+.av .dot[data-on="false"] { background: var(--rubric); }
+.pgl { color: var(--ink-3); display: flex; flex: 0 0 auto; }
+.pgl.tint { color: var(--ch); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4 · WINDOW SHELL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.app { height: 100%; display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); }
+
+.side {
+  background: var(--side); border-right: 1px solid var(--rule);
+  display: flex; flex-direction: column; min-height: 0; padding-bottom: 0;
+}
+.lights { display: flex; gap: 8px; padding: 17px 16px 13px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; }
+.lights i:nth-child(1) { background: #ff5f57; }
+.lights i:nth-child(2) { background: #febc2e; }
+.lights i:nth-child(3) { background: #28c840; }
+
+.proj {
+  display: flex; align-items: center; gap: 9px; margin: 0 10px 10px; padding: 7px 8px;
+  border-radius: var(--r); transition: background var(--t);
+}
+.proj:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.pmark {
+  width: 25px; height: 25px; flex: 0 0 auto; display: grid; place-items: center;
+  border-radius: 6px; background: var(--ink); color: var(--paper);
+  font-family: var(--ui); font-size: var(--f0); font-weight: 600;
+}
+.pname { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.pname b { font-family: var(--sans); font-size: var(--f-1); font-weight: 600; }
+.pname em { font-style: normal; font-size: var(--f-2); font-family: var(--sans); color: var(--ink-3); }
+.proj svg { margin-left: auto; color: var(--ink-4); }
+
+.side .field { margin: 0 10px 12px; }
+
+.nav { padding: 0 8px; display: flex; flex-direction: column; gap: 1px; }
+.navrow {
+  display: flex; align-items: center; gap: 9px; padding: 6px 9px; border-radius: var(--r);
+  font-size: var(--f0); font-weight: 500; color: var(--ink-2);
+  transition: background var(--t), color var(--t);
+}
+.navrow svg { color: var(--ink-4); }
+.navrow .c { margin-left: auto; font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.navrow:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--ink); }
+.navrow.on { background: var(--card); color: var(--ink); box-shadow: var(--lift); font-weight: 600; }
+.navrow.on svg { color: var(--rubric); }
+
+.railsec { padding: 18px 17px 7px; }
+.accts { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 8px 10px; }
+.agroup { margin-bottom: 10px; }
+.ahead {
+  display: flex; align-items: center; gap: 6px; padding: 4px 9px 4px;
+  font-size: var(--f-2); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-4); font-weight: 600;
+}
+.ahead .ln { flex: 1; height: 1px; background: var(--rule); }
+.arow {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 4px 9px;
+  border-radius: var(--r); font-size: var(--f-1); color: var(--ink-2);
+  transition: background var(--t);
+}
+.arow:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.arow .ah { font-family: var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arow .pend { margin-left: auto; font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.arow .pend.bad { color: var(--rubric); }
+.addacct {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 9px;
+  border-radius: var(--r); font-size: var(--f-1); color: var(--ink-4); font-family: var(--sans);
+}
+.addacct:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); color: var(--ink-2); }
+
+.nextdue {
+  display: flex; align-items: center; gap: 8px; padding: 11px 16px;
+  border-top: 1px solid var(--rule); font-size: var(--f-1); color: var(--ink-2); font-family: var(--sans);
+}
+.pulse {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: 0 0 auto;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 55%, transparent);
+  animation: pulse 2.6s ease-out infinite;
+}
+@keyframes pulse { 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* ── main region ────────────────────────────────────────────────────────── */
+.main { min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); background: var(--paper); }
+
+.bar {
+  height: var(--bar-h); flex: 0 0 auto;
+  display: flex; align-items: center; gap: 10px; padding: 0 18px;
+  border-bottom: 1px solid var(--rule); background: var(--paper);
+}
+.bar h1 { font-size: var(--f2); }
+.scroll { overflow: auto; min-height: 0; }
+.pad { padding: 20px 22px 40px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5 · PLAN — kanban
+   ═══════════════════════════════════════════════════════════════════════════ */
+.filters { display: flex; align-items: center; gap: 7px; padding: 11px 18px; border-bottom: 1px solid var(--rule); overflow-x: auto; }
+.filters::-webkit-scrollbar { display: none; }
+.fdiv { width: 1px; height: 18px; flex: 0 0 auto; margin: 0 3px; background: var(--rule-2); }
+.swatch { width: 7px; height: 7px; border-radius: 2px; flex: 0 0 auto; background: var(--ch); }
+
+.kan { display: flex; gap: 14px; padding: 18px; min-height: 100%; align-items: flex-start; }
+.kcol {
+  flex: 1 1 0; min-width: 218px; display: flex; flex-direction: column; gap: 9px;
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  border-radius: var(--r-l); padding: 11px 10px 12px;
+}
+.kcolh { display: flex; align-items: baseline; gap: 7px; padding: 1px 3px 2px; }
+.kcolh b { font-family: var(--sans); font-size: var(--f-1); font-weight: 700; letter-spacing: .02em; }
+.kcolh .c { font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.kcolh em { font-style: normal; font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); margin-left: auto; }
+
+.kcard {
+  display: block; width: 100%; background: var(--card); border-radius: var(--r);
+  box-shadow: var(--lift); padding: 10px 11px 9px; position: relative; overflow: hidden;
+  transition: box-shadow var(--t), translate var(--t);
+}
+.kcard::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ch, var(--rule-2)); }
+.kcard:hover { box-shadow: var(--pop); translate: 0 -1px; }
+.kcard .ktop { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.kcard .kh { font-family: var(--sans); font-size: var(--f-2); font-weight: 600; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kcard .kbody { font-size: var(--f0); line-height: 1.42; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.kcard .kfoot { display: flex; align-items: center; gap: 7px; margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--rule); }
+.kcard .kwhen { font-family: var(--mono); font-size: var(--f-2); color: var(--rubric); }
+.kcard .kwhen.dim { color: var(--ink-4); }
+.kstrip { display: flex; gap: 3px; margin-top: 8px; }
+.kstrip i { width: 26px; height: 20px; border-radius: 3px; background: linear-gradient(155deg, #cfd1d5, #a9acb3); flex: 0 0 auto; }
+.kstrip i:nth-child(2) { background: linear-gradient(155deg, #d2c9cd, #aca2a7); }
+.kstrip i:nth-child(3) { background: linear-gradient(155deg, #cad0ca, #a4aba3); }
+.kadd {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+  padding: 9px; border-radius: var(--r); font-family: var(--sans); font-size: var(--f-1);
+  color: var(--ink-4); box-shadow: inset 0 0 0 1px var(--rule-2);
+}
+.kadd:hover { background: var(--card); color: var(--ink-2); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6 · PLAN — calendar (month + week lanes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mhead { display: grid; grid-template-columns: repeat(7, 1fr); padding: 9px 18px 7px; gap: 1px; }
+.mhead span { font-family: var(--sans); font-size: var(--f-2); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+
+.mgrid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px;
+  background: var(--rule); margin: 0 18px 18px; border-radius: var(--r-l); overflow: hidden;
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.mcell { background: var(--card); min-height: 108px; padding: 7px 7px 8px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+.mcell.pad { background: color-mix(in srgb, var(--ink) 2.5%, var(--card)); }
+.mcell.past { background: color-mix(in srgb, var(--ink) 1.6%, var(--card)); }
+.mcell.today { background: color-mix(in srgb, var(--rubric) 3.5%, var(--card)); }
+.mcell:hover { background: color-mix(in srgb, var(--ink) 3.5%, var(--card)); }
+.mday { display: flex; align-items: baseline; gap: 5px; }
+.mday b { font-family: var(--mono); font-size: var(--f-1); color: var(--ink-3); font-weight: 500; }
+.mcell.today .mday b { color: var(--rubric); font-weight: 700; }
+.mday em { font-style: normal; font-family: var(--sans); font-size: var(--f-2); color: var(--rubric); letter-spacing: .06em; text-transform: uppercase; }
+.mreach { margin-left: auto; font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.mbar { display: block; height: 2px; border-radius: 2px; background: var(--ink-4); opacity: .4; width: calc(var(--p) * 100%); }
+
+.mitem {
+  display: flex; align-items: center; gap: 5px; padding: 3px 5px 3px 4px;
+  border-radius: 4px; font-size: var(--f-1); position: relative; overflow: hidden;
+  background: color-mix(in srgb, var(--ch) 8%, transparent);
+  box-shadow: inset 2px 0 0 var(--ch);
+  transition: background var(--t);
+}
+.mitem:hover { background: color-mix(in srgb, var(--ch) 16%, transparent); }
+.mitem .pgl { color: var(--ch); }
+.mitem em { font-style: normal; font-family: var(--mono); font-size: var(--f-2); color: color-mix(in srgb, var(--ch) 76%, var(--ink)); }
+.mitem span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--f-1); }
+.mitem[data-status="failed"] { box-shadow: inset 2px 0 0 var(--rubric); background: color-mix(in srgb, var(--rubric) 8%, transparent); }
+.mmore { font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); padding-left: 5px; }
+
+/* week lanes */
+.lanes { margin: 0 18px 18px; border-radius: var(--r-l); overflow: hidden; box-shadow: 0 0 0 1px var(--rule); background: var(--card); }
+.lanehead, .lane { display: grid; grid-template-columns: 176px repeat(7, minmax(0, 1fr)); }
+.lanehead { border-bottom: 1px solid var(--rule); background: color-mix(in srgb, var(--ink) 2.5%, var(--card)); }
+.lanehead .corner { padding: 9px 12px; font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+.dhead { padding: 8px 10px; border-left: 1px solid var(--rule); display: flex; align-items: baseline; gap: 5px; }
+.dhead b { font-size: var(--f-1); font-weight: 600; }
+.dhead.today b { color: var(--rubric); }
+.lane { border-top: 1px solid var(--rule); min-height: 62px; }
+.lanelab { display: flex; align-items: center; gap: 7px; padding: 8px 11px; background: color-mix(in srgb, var(--ch) 4%, var(--card)); box-shadow: inset 3px 0 0 var(--ch); }
+.lanelab .ah { font-size: var(--f-1); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cadmini { margin-left: auto; font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.cellw { border-left: 1px solid var(--rule); padding: 5px; display: flex; flex-direction: column; gap: 4px; }
+.cellw.today { background: color-mix(in srgb, var(--rubric) 2.5%, transparent); }
+.ev {
+  display: flex; flex-direction: column; gap: 1px; padding: 5px 7px; border-radius: 5px;
+  background: color-mix(in srgb, var(--ch) 9%, transparent); box-shadow: inset 2px 0 0 var(--ch);
+  transition: background var(--t);
+}
+.ev:hover { background: color-mix(in srgb, var(--ch) 17%, transparent); }
+.evt { font-size: var(--f-2); color: color-mix(in srgb, var(--ch) 78%, var(--ink)); }
+.evb { font-size: var(--f-1); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev[data-status="failed"] { box-shadow: inset 2px 0 0 var(--rubric); background: color-mix(in srgb, var(--rubric) 9%, transparent); }
+
+/* channel legend */
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; padding: 10px 18px 16px; }
+.lgi { display: inline-flex; align-items: center; gap: 5px; font-family: var(--sans); font-size: var(--f-2); color: var(--ink-3); }
+.lgi i { width: 8px; height: 8px; border-radius: 2px; background: var(--ch); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7 · LIBRARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.gal { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; padding: 16px 18px 40px; align-items: start; }
+.galcol { display: flex; flex-direction: column; gap: 13px; }
+.tile { border-radius: var(--r-l); overflow: hidden; background: var(--card); box-shadow: var(--lift); position: relative; transition: box-shadow var(--t), translate var(--t); }
+.tile:hover { box-shadow: var(--pop); translate: 0 -2px; }
+.frame { position: relative; width: 100%; aspect-ratio: var(--ratio, 4/5); overflow: hidden; }
+.ph { position: absolute; inset: 0; background: linear-gradient(155deg, #cdcfd4, #a9acb4); }
+.ph[data-tone="1"] { background: linear-gradient(155deg, #c4c8d0, #9ea3ad); }
+.ph[data-tone="2"] { background: linear-gradient(155deg, #d1c8cc, #aba1a6); }
+.ph[data-tone="3"] { background: linear-gradient(155deg, #c9cfc9, #a3aaa2); }
+.ph[data-tone="4"] { background: linear-gradient(155deg, #c3ccd2, #9ba5ad); }
+.ph[data-tone="5"] { background: linear-gradient(155deg, #d0cdc5, #aaa79d); }
+.ph[data-tone="6"] { background: linear-gradient(155deg, #c9c6d2, #a3a0ad); }
+.ph[data-tone="7"] { background: linear-gradient(155deg, #cecbbf, #a8a596); }
+.ph[data-tone="8"] { background: linear-gradient(155deg, #c5cfcb, #9daaa5); }
+.ph[data-tone="9"] { background: linear-gradient(155deg, #cbc7ce, #a5a1a9); }
+.scrim { position: absolute; inset: 0; background: linear-gradient(transparent 45%, rgb(24 24 28 / .58)); }
+.mt { position: absolute; left: 10px; right: 10px; bottom: 8px; color: #fff; font-size: var(--f-1); line-height: 1.3; }
+.pill { position: absolute; right: 8px; top: 8px; padding: 2px 7px; border-radius: 999px; background: rgb(255 255 255 / .9); color: #22242a; font-family: var(--sans); font-size: var(--f-2); font-weight: 600; }
+.playb { position: absolute; inset: 0; margin: auto; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: rgb(255 255 255 / .88); color: #22242a; }
+.edge { position: absolute; border-radius: var(--r-l); background: color-mix(in srgb, var(--ink) 12%, var(--card)); inset: 0; }
+.edge.e1 { translate: 0 -4px; scale: .965; }
+.edge.e2 { translate: 0 -8px; scale: .93; }
+.txt { padding: 13px 14px; font-size: var(--f0); line-height: 1.5; }
+.txt .lab { display: block; font-family: var(--sans); font-size: var(--f-2); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-4); margin-bottom: 6px; font-weight: 600; }
+.txt.note .lab { color: var(--rubric); }
+.artbody { padding: 12px 14px; }
+.artbody h3 { font-size: var(--f1); font-weight: 500; line-height: 1.2; }
+.artbody .src { font-family: var(--mono); font-size: var(--f-2); color: var(--rubric); margin-top: 5px; display: block; }
+.cap { display: flex; align-items: center; gap: 6px; padding: 8px 11px; border-top: 1px solid var(--rule); }
+.cap .ch { font-family: var(--sans); font-size: var(--f-2); color: var(--ink-2); font-weight: 600; }
+.cap .cd { font-size: var(--f-2); color: var(--ink-4); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8 · ARTICLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+.artgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(292px, 1fr)); gap: 15px; padding: 18px; }
+.artcard {
+  background: var(--card); border-radius: var(--r-l); box-shadow: var(--lift);
+  padding: 17px 18px 14px; display: flex; flex-direction: column; gap: 10px;
+  transition: box-shadow var(--t), translate var(--t); min-height: 178px;
+}
+.artcard:hover { box-shadow: var(--pop); translate: 0 -2px; }
+.artcard .atop { display: flex; align-items: center; gap: 7px; }
+.artcard h2 { font-size: var(--f1); line-height: 1.22; font-weight: 500; }
+.artcard p { font-size: var(--f0); line-height: 1.5; color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.artcard .afoot { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 11px; border-top: 1px solid var(--rule); }
+.prog { width: 46px; height: 3px; border-radius: 3px; background: var(--rule-2); overflow: hidden; flex: 0 0 auto; }
+.prog i { display: block; height: 100%; width: calc(var(--p) * 100%); background: var(--ink-3); }
+
+/* long room */
+.longroom { display: grid; grid-template-columns: minmax(0, 1fr) 268px; min-height: 0; }
+.lfbody { padding: 40px 8vw 90px; overflow: auto; }
+.lfbody .measure { max-width: 64ch; margin: 0 auto; }
+.lftitle { font-size: var(--f4); font-weight: 500; line-height: 1.1; letter-spacing: -.012em; }
+.lftitle::first-letter { color: var(--rubric); }
+.lfdeck { font-size: var(--f1); line-height: 1.55; color: var(--ink-2); font-style: italic; margin: 16px 0 30px; }
+.lfbody h2 { font-size: var(--f2); font-weight: 500; margin: 32px 0 10px; }
+.lfbody h2::before { content: "¶ "; color: var(--rubric); }
+.lfbody p { font-size: 16.5px; line-height: 1.68; margin-bottom: 15px; }
+.lfbody p.locked { color: var(--ink-2); }
+.caret { display: inline-block; width: 1.5px; height: 1em; background: var(--rubric); translate: 2px 2px; animation: blink 1.15s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.readonly { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: var(--r); background: color-mix(in srgb, var(--good) 8%, transparent); font-family: var(--sans); font-size: var(--f-1); color: var(--good); margin-bottom: 26px; }
+
+.rail { border-left: 1px solid var(--rule); background: var(--side); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.railbody { overflow: auto; padding: 14px 15px 30px; display: flex; flex-direction: column; gap: 9px; }
+.orow { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; border-radius: var(--r); font-size: var(--f-1); color: var(--ink-2); }
+.orow:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.orow.on { background: var(--card); box-shadow: var(--lift); color: var(--ink); }
+.obox { width: 14px; height: 14px; flex: 0 0 auto; border-radius: 3px; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--rule-2); margin-top: 1px; }
+.orow.done .obox { background: var(--ink); color: var(--paper); box-shadow: none; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: var(--f-1); }
+.kv dt { font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); text-transform: uppercase; letter-spacing: .08em; align-self: center; font-weight: 600; }
+.kv dd { text-align: right; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9 · ASSETS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.withrail { display: grid; grid-template-columns: minmax(0, 1fr) 288px; min-height: 0; }
+.assetgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 13px; padding: 16px 18px 40px; }
+.acell { border-radius: var(--r); overflow: hidden; background: var(--card); box-shadow: var(--lift); position: relative; transition: box-shadow var(--t), translate var(--t); }
+.acell:hover { box-shadow: var(--pop); translate: 0 -2px; }
+.acell[data-pick="1"] { box-shadow: var(--lift), 0 0 0 2px var(--ink); }
+.acell .frame { aspect-ratio: 1/1; }
+.ameta { display: flex; align-items: center; gap: 6px; padding: 7px 9px; }
+.an { font-family: var(--sans); font-size: var(--f-2); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.usedin, .earn { font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.earn { color: var(--good); }
+.unused { position: absolute; left: 8px; bottom: 8px; padding: 2px 6px; border-radius: 3px; background: rgb(255 255 255 / .9); color: var(--warn); font-family: var(--sans); font-size: var(--f-2); font-weight: 700; }
+.ihero { border-radius: var(--r); overflow: hidden; margin-bottom: 14px; }
+.usedrow { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 9px; border-radius: var(--r); font-size: var(--f-1); }
+.usedrow:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.usedrow .ub { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10 · ANALYTICS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.anhead { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 26px 18px 20px; }
+.anhead .ttl { text-align: center; }
+.anhead h1 { font-size: var(--f3); }
+
+.totals {
+  display: flex; align-items: stretch; gap: 0; background: var(--card);
+  border-radius: var(--r-l); box-shadow: var(--lift); overflow: hidden;
+}
+.tot { padding: 13px 26px; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 132px; }
+.tot + .tot { box-shadow: inset 1px 0 0 var(--rule); }
+.tot .stat-k { font-size: var(--f-2); letter-spacing: .11em; text-transform: uppercase; color: var(--ink-4); font-weight: 600; }
+.tot .stat-v { font-family: var(--ui); font-size: var(--f3); font-weight: 500; line-height: 1.05; letter-spacing: -.01em; }
+
+.anband { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; padding: 4px 18px 18px; }
+.panel { background: var(--card); border-radius: var(--r-l); box-shadow: var(--lift); padding: 15px 17px 14px; }
+.panel > .sechead { margin-bottom: 12px; }
+.panel.wide { grid-column: 1 / -1; }
+
+.chartwrap { position: relative; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .gl { stroke: color-mix(in srgb, var(--ink) 7%, transparent); stroke-width: 1; }
+.chart .cl { fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.chart .cfill { stroke: none; }
+.chart .cdot { stroke: var(--card); stroke-width: 2; }
+.chart .xl { font-family: var(--mono); font-size: 9px; fill: color-mix(in srgb, var(--ink) 34%, transparent); }
+.spark { width: 100%; height: auto; display: block; overflow: visible; }
+.spark .sline { fill: none; stroke: var(--ch, var(--ink-3)); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.spark .sfill { fill: url(#sg); stroke: none; }
+
+.chlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 11px; }
+.chlegend .lgi i { border-radius: 999px; width: 9px; height: 3px; }
+
+/* channel wall — five in a row */
+.wall { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; padding: 4px 18px 20px; }
+@media (max-width: 1420px) { .wall { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1160px) { .wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.chcard {
+  background: var(--card); border-radius: var(--r-l); box-shadow: var(--lift);
+  padding: 13px 14px 11px; display: flex; flex-direction: column; gap: 10px;
+  position: relative; overflow: hidden; transition: box-shadow var(--t), translate var(--t);
+}
+.chcard::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--ch); }
+.chcard:hover { box-shadow: var(--pop); translate: 0 -2px; }
+.chhead { display: flex; align-items: center; gap: 8px; }
+.chn { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.chn b { font-family: var(--sans); font-size: var(--f-1); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chn em { font-style: normal; font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); }
+.chnums { display: flex; gap: 16px; }
+.cn { display: flex; flex-direction: column; gap: 1px; }
+.cn b { font-family: var(--ui); font-size: var(--f2); font-weight: 500; line-height: 1.05; }
+.cn em { font-style: normal; font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); text-transform: uppercase; letter-spacing: .07em; }
+.chfoot { display: flex; align-items: center; gap: 8px; padding-top: 9px; border-top: 1px solid var(--rule); }
+.cadbar { display: block; width: 34px; height: 3px; border-radius: 3px; background: var(--rule-2); position: relative; overflow: hidden; }
+.cadbar::after { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--p) * 100%); background: var(--ch); }
+.cad { display: flex; align-items: center; gap: 6px; }
+.cad em { font-style: normal; font-family: var(--mono); font-size: var(--f-2); color: var(--ink-4); }
+.chq { font-family: var(--sans); font-size: var(--f-2); color: var(--ink-3); }
+.chq b { font-family: var(--mono); color: var(--ink); }
+.chcard.add { align-items: center; justify-content: center; gap: 5px; color: var(--ink-4); box-shadow: inset 0 0 0 1px var(--rule-2); background: none; }
+.chcard.add::before { display: none; }
+.chcard.add:hover { background: var(--card); box-shadow: var(--lift); }
+
+/* one channel */
+.chhero { display: flex; align-items: center; gap: 14px; padding: 22px 22px 16px; border-bottom: 1px solid var(--rule); }
+.chstats { display: flex; gap: 26px; }
+.postrow {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) repeat(5, 62px) 66px; align-items: center;
+  gap: 10px; width: 100%; padding: 9px 12px; border-radius: var(--r); font-size: var(--f-1);
+}
+.postrow:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.postrow + .postrow { box-shadow: inset 0 1px 0 var(--rule); }
+.postrow.th { font-family: var(--sans); font-size: var(--f-2); text-transform: uppercase; letter-spacing: .09em; color: var(--ink-4); font-weight: 600; padding-bottom: 6px; }
+.postrow .pb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.postrow .n { font-family: var(--mono); font-size: var(--f-1); text-align: right; }
+.postrow .thumb { width: 30px; height: 30px; border-radius: 5px; overflow: hidden; position: relative; }
+.rankbar { position: relative; }
+.rankbar::before { content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%; height: 22px; width: calc(var(--p) * 100%); background: color-mix(in srgb, var(--ch) 9%, transparent); border-radius: 4px; z-index: -1; }
+
+.heat { display: flex; flex-direction: column; gap: 3px; }
+.heatrow { display: grid; grid-template-columns: 20px repeat(8, 1fr); gap: 3px; align-items: center; }
+.heatrow.head span { font-family: var(--mono); font-size: 9px; color: var(--ink-4); text-align: center; }
+.hd { font-family: var(--sans); font-size: var(--f-2); color: var(--ink-4); }
+.heatcell { display: block; height: 19px; border-radius: 4px; background: color-mix(in srgb, var(--ink) calc(var(--v) * 42%), transparent); }
+.heatcell[data-peak="1"] { box-shadow: inset 0 0 0 1.5px var(--rubric); }
+
+.anote { font-size: var(--f-1); color: var(--ink-3); font-style: italic; margin-top: 11px; line-height: 1.5; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11 · DAY DRAWER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.scrim-full { position: fixed; inset: 0; background: rgb(28 28 32 / .22); opacity: 0; pointer-events: none; transition: opacity var(--t); z-index: 40; }
+body[data-drawer="on"] .scrim-full { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 380px; background: var(--card);
+  box-shadow: var(--pop); z-index: 41; translate: 100% 0; transition: translate var(--t);
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+}
+body[data-drawer="on"] .drawer { translate: 0 0; }
+.drawerbody { overflow: auto; padding: 16px 18px 30px; display: flex; flex-direction: column; gap: 10px; }
+.drow {
+  display: flex; align-items: flex-start; gap: 9px; padding: 10px 11px; border-radius: var(--r);
+  background: color-mix(in srgb, var(--ch) 6%, transparent); box-shadow: inset 3px 0 0 var(--ch);
+}
+.drow .dtime { font-family: var(--mono); font-size: var(--f-1); color: color-mix(in srgb, var(--ch) 76%, var(--ink)); flex: 0 0 auto; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   12 · MISC
+   ═══════════════════════════════════════════════════════════════════════════ */
+.empty { padding: 60px 20px; text-align: center; color: var(--ink-4); font-style: italic; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--ink) 24%, transparent); background-clip: padding-box; border: 3px solid transparent; }
+::-webkit-scrollbar-track { background: none; }
+</style>
+</head>
+<body data-drawer="off">
+
+<div class="app">
+  <aside class="side" id="side"></aside>
+  <div class="main" id="main"></div>
+</div>
+
+<div class="scrim-full" id="scrim"></div>
+<aside class="drawer" id="drawer"></aside>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════════════════════════ */
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const num = (n) => n >= 1000000 ? (n / 1000000).toFixed(1) + "M" : n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "K" : String(n);
+
+const PROJECTS = [
+  { id: "validate",  name: "Validate",  mark: "V", accounts: 4, queued: 11 },
+  { id: "fieldnote", name: "Fieldnote", mark: "F", accounts: 2, queued: 4 },
+  { id: "harbor",    name: "Harbor",    mark: "H", accounts: 1, queued: 2 },
+];
+const CURRENT = PROJECTS[0];
+
+/* Eleven accounts. `tint` is the channel's identity everywhere in the app. */
+const ACCOUNTS = [
+  { id: "x1",  platform: "x",         handle: "@validateapp",        name: "Validate",  project: "validate",  tint: "#33363d", connected: true,  health: "ok",     followers: 4820,  delta: 2.4,  queued: 4, last: "2h ago",      cadence: { t: 5, a: 5 }, best: "09:30",     reach7: 18400, eng7: 3.9 },
+  { id: "x2",  platform: "x",         handle: "@kartikwrites",       name: "Kartik",    project: null,        tint: "#565b66", connected: true,  health: "ok",     followers: 11240, delta: 1.1,  queued: 3, last: "yesterday",   cadence: { t: 4, a: 3 }, best: "14:15",     reach7: 41200, eng7: 2.6 },
+  { id: "x3",  platform: "x",         handle: "@fieldnoteco",        name: "Fieldnote", project: "fieldnote", tint: "#7c828e", connected: true,  health: "quiet",  followers: 890,   delta: -0.3, queued: 0, last: "11 days ago", cadence: { t: 3, a: 0 }, best: "18:00",     reach7: 640,   eng7: 1.4 },
+  { id: "ig1", platform: "instagram", handle: "@validate.app",       name: "Validate",  project: "validate",  tint: "#a8577a", connected: true,  health: "ok",     followers: 3110,  delta: 4.8,  queued: 5, last: "5h ago",      cadence: { t: 4, a: 4 }, best: "11:00",     reach7: 12900, eng7: 6.2 },
+  { id: "ig2", platform: "instagram", handle: "@fieldnote.co",       name: "Fieldnote", project: "fieldnote", tint: "#c0778f", connected: false, health: "reauth", followers: 1740,  delta: 0,    queued: 2, last: "9 days ago",  cadence: { t: 3, a: 0 }, best: "12:30",     reach7: 0,     eng7: 0 },
+  { id: "ig3", platform: "instagram", handle: "@harbor.tools",       name: "Harbor",    project: "harbor",    tint: "#8d4a6c", connected: true,  health: "quiet",  followers: 620,   delta: 0.6,  queued: 2, last: "6 days ago",  cadence: { t: 2, a: 1 }, best: "19:00",     reach7: 1480,  eng7: 5.1 },
+  { id: "ig4", platform: "instagram", handle: "@kartik.builds",      name: "Kartik",    project: null,        tint: "#d18aa0", connected: true,  health: "ok",     followers: 8460,  delta: 3.2,  queued: 3, last: "1d ago",      cadence: { t: 4, a: 4 }, best: "17:45",     reach7: 29600, eng7: 7.4 },
+  { id: "md1", platform: "medium",    handle: "@kartikb",            name: "Kartik B",  project: null,        tint: "#2f7355", connected: true,  health: "ok",     followers: 2280,  delta: 0.9,  queued: 1, last: "4 days ago",  cadence: { t: 1, a: 1 }, best: "Tue 09:00", reach7: 5400,  eng7: 41 },
+  { id: "md2", platform: "medium",    handle: "Validate Engineering",name: "Validate E",project: "validate",  tint: "#54937a", connected: true,  health: "quiet",  followers: 410,   delta: 0.2,  queued: 0, last: "3 weeks ago", cadence: { t: 1, a: 0 }, best: "Thu 08:00", reach7: 320,   eng7: 38 },
+  { id: "li1", platform: "linkedin",  handle: "in/kartikb",          name: "Kartik B",  project: null,        tint: "#35618c", connected: true,  health: "ok",     followers: 6900,  delta: 1.8,  queued: 2, last: "2d ago",      cadence: { t: 2, a: 2 }, best: "Mon 09:00", reach7: 15800, eng7: 4.4 },
+  { id: "th1", platform: "threads",   handle: "@validateapp",        name: "Validate",  project: "validate",  tint: "#6d4f96", connected: true,  health: "ok",     followers: 1290,  delta: 5.6,  queued: 2, last: "5h ago",      cadence: { t: 4, a: 3 }, best: "17:45",     reach7: 4700,  eng7: 5.8 },
+];
+const acct = (id) => ACCOUNTS.find((a) => a.id === id) || ACCOUNTS[0];
+
+const PLATFORMS = [
+  { id: "x", label: "X", n: 3 },
+  { id: "instagram", label: "Instagram", n: 4 },
+  { id: "medium", label: "Medium", n: 2 },
+  { id: "linkedin", label: "LinkedIn", n: 1 },
+  { id: "threads", label: "Threads", n: 1 },
+];
+const PLAB = { x: "X", instagram: "Instagram", medium: "Medium", linkedin: "LinkedIn", threads: "Threads", reddit: "Reddit" };
+const KIND = { post: "Post", thread: "Thread", carousel: "Carousel", reel: "Reel", image: "Image", article: "Article", note: "Note" };
+
+/* ── deterministic series generator ──────────────────────────────────────
+   Each channel needs 90 days of followers and reach. Hand-writing eleven
+   × two × ninety numbers is noise; a seeded walk shaped by the account's
+   own delta gives plots that differ believably and reproduce exactly. */
+function seeded(seed) { let s = seed; return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296; }
+function walk(n, start, driftPct, vol, seed) {
+  const r = seeded(seed), out = [];
+  const step = start * (driftPct / 100) / n;
+  let v = start * (1 - driftPct / 100);
+  for (let i = 0; i < n; i++) { v += step + (r() - 0.5) * start * vol; out.push(Math.max(0, Math.round(v))); }
+  out[n - 1] = start;
+  return out;
+}
+const SERIES = Object.fromEntries(ACCOUNTS.map((a, i) => {
+  const dead = a.health === "reauth";
+  return [a.id, {
+    followers: walk(90, a.followers, Math.max(0.6, a.delta * 3.4), 0.004, 7919 + i * 131),
+    reach:     dead ? new Array(90).fill(0) : walk(90, Math.round(a.reach7 / 7), 34, 0.20, 4241 + i * 197),
+    posts:     dead ? new Array(90).fill(0) : walk(90, Math.max(1, a.cadence.a), 10, 0.5, 3313 + i * 173),
+  }];
+}));
+
+const ASSET_FOLDERS = [
+  { id: "all", label: "All assets", count: 214 }, { id: "launch", label: "Launch week", count: 38 },
+  { id: "screens", label: "Screens", count: 61 }, { id: "studio", label: "Desk & studio", count: 24 },
+  { id: "footage", label: "Raw footage", count: 52 }, { id: "unsorted", label: "Unsorted", count: 39, warn: true },
+];
+const ASSETS = [
+  { id: "as1",  type: "video", title: "Drag to reschedule",      ratio: "9/16", dur: "0:42", size: "38 MB", date: "24 Jul", usedIn: 2, reach: 9400,  tone: 1, tags: ["screencap", "calendar"] },
+  { id: "as2",  type: "set",   title: "Eight screens, annotated",ratio: "4/5",  count: 8,    size: "14 MB", date: "23 Jul", usedIn: 1, reach: 12100, tone: 2, tags: ["carousel", "launch"] },
+  { id: "as3",  type: "photo", title: "Desk, 7am",               ratio: "3/2",  size: "6.1 MB", date: "22 Jul", usedIn: 3, reach: 7800, tone: 3, tags: ["desk", "warm"] },
+  { id: "as4",  type: "photo", title: "Grain test",              ratio: "1/1",  size: "4.4 MB", date: "21 Jul", usedIn: 0, reach: 0,    tone: 5, tags: ["texture"] },
+  { id: "as5",  type: "video", title: "Composer, end to end",    ratio: "9/16", dur: "1:08", size: "71 MB", date: "20 Jul", usedIn: 1, reach: 5200, tone: 6, tags: ["screencap"] },
+  { id: "as6",  type: "set",   title: "Six tile shapes",         ratio: "4/5",  count: 6,    size: "9 MB",  date: "19 Jul", usedIn: 1, reach: 6600, tone: 7, tags: ["carousel", "library"] },
+  { id: "as7",  type: "photo", title: "Fieldnote, cover study",  ratio: "3/4",  size: "5.2 MB", date: "18 Jul", usedIn: 0, reach: 0,    tone: 8, tags: ["fieldnote", "cover"] },
+  { id: "as8",  type: "photo", title: "Calendar, month grid",    ratio: "3/2",  size: "3.8 MB", date: "17 Jul", usedIn: 2, reach: 4100, tone: 9, tags: ["screenshot"] },
+  { id: "as9",  type: "video", title: "Notification fires",      ratio: "16/9", dur: "0:16", size: "22 MB", date: "16 Jul", usedIn: 1, reach: 3300, tone: 4, tags: ["screencap", "native"] },
+  { id: "as10", type: "set",   title: "Launch week, ten cards",  ratio: "1/1",  count: 10,   size: "18 MB", date: "15 Jul", usedIn: 2, reach: 15400, tone: 2, tags: ["carousel", "launch"] },
+  { id: "as11", type: "photo", title: "Traffic lights, close",   ratio: "1/1",  size: "2.9 MB", date: "14 Jul", usedIn: 0, reach: 0,    tone: 0, tags: [] },
+  { id: "as12", type: "photo", title: "Harbor, first run",       ratio: "3/2",  size: "5.7 MB", date: "13 Jul", usedIn: 0, reach: 0,    tone: 3, tags: ["harbor"] },
+  { id: "as13", type: "video", title: "Sidebar collapse",        ratio: "16/9", dur: "0:24", size: "31 MB", date: "12 Jul", usedIn: 1, reach: 2700, tone: 1, tags: ["screencap"] },
+  { id: "as14", type: "set",   title: "Before / after, tokens",  ratio: "4/5",  count: 4,    size: "7 MB",  date: "11 Jul", usedIn: 1, reach: 8900, tone: 6, tags: ["carousel", "design"] },
+];
+
+const LIBRARY_FILTERS = [
+  { id: "all", label: "All", count: 342 }, { id: "post", label: "Posts", count: 141 },
+  { id: "thread", label: "Threads", count: 44 }, { id: "carousel", label: "Carousels", count: 38 },
+  { id: "reel", label: "Reels", count: 29 }, { id: "image", label: "Images", count: 61 },
+  { id: "article", label: "Articles", count: 17 }, { id: "note", label: "Notes", count: 12 },
+];
+const LIBRARY = [
+  { id: "l1",  kind: "reel",     ratio: "9/16", account: "ig4", date: "24 Jul", duration: "0:42", title: "Drag to reschedule", tone: 1, reach: 9400 },
+  { id: "l2",  kind: "post",     account: "x2",  date: "24 Jul", tone: 0, reach: 21300, body: "Shipping is a design constraint. Every week you don't ship, the thing you're building drifts further from the thing anyone wanted." },
+  { id: "l3",  kind: "carousel", ratio: "4/5",  account: "ig1", date: "23 Jul", slides: 8, title: "Eight screens, annotated", tone: 2, reach: 12100 },
+  { id: "l4",  kind: "note",     account: null,  date: "23 Jul", tone: 0, body: "A departure board for the week. Posts leave from gates. Accounts are destinations. Delays are honest." },
+  { id: "l5",  kind: "image",    ratio: "3/2",  account: "ig4", date: "22 Jul", title: "Desk, 7am", tone: 3, reach: 7800 },
+  { id: "l6",  kind: "thread",   parts: 5, account: "x1", date: "22 Jul", tone: 0, reach: 18900, body: "Five things I got wrong about local-first before shipping one. Number two cost me a rewrite." },
+  { id: "l7",  kind: "article",  ratio: "16/9", account: "md1", date: "21 Jul", source: "medium.com/@kartikb", title: "Eleven accounts and one person", tone: 4, reach: 4820 },
+  { id: "l8",  kind: "image",    ratio: "1/1",  account: "ig1", date: "21 Jul", title: "Grain test", tone: 5, reach: 3200 },
+  { id: "l9",  kind: "post",     account: "x1", date: "20 Jul", tone: 0, reach: 6400, body: "Meta app review is the reason your scheduler has a Copy button instead of an API key." },
+  { id: "l10", kind: "reel",     ratio: "9/16", account: "th1", date: "20 Jul", duration: "1:08", title: "Composer, end to end", tone: 6, reach: 5200 },
+  { id: "l11", kind: "carousel", ratio: "4/5",  account: "ig1", date: "19 Jul", slides: 6, title: "Six tile shapes", tone: 7, reach: 6600 },
+  { id: "l12", kind: "note",     account: null, date: "19 Jul", tone: 0, body: "Never more than three columns. Write it on the wall." },
+  { id: "l13", kind: "image",    ratio: "3/4",  account: "ig2", date: "18 Jul", title: "Fieldnote, cover study", tone: 8, reach: 1900 },
+  { id: "l14", kind: "thread",   parts: 3, account: "x1", date: "18 Jul", tone: 0, reach: 8800, body: "Why I stopped writing captions in the app that publishes them." },
+  { id: "l15", kind: "post",     account: "x2", date: "17 Jul", tone: 0, reach: 14200, body: "Nobody asks how many columns your app has until it has four." },
+  { id: "l16", kind: "image",    ratio: "3/2",  account: "ig3", date: "17 Jul", title: "Calendar, month grid", tone: 9, reach: 2100 },
+];
+
+/* ── articles ─────────────────────────────────────────────────────────── */
+const ARTICLES = [
+  { id: "lf1", title: "Local-first is a promise, not a stack detail", words: 2140, status: "draft", dest: ["md1", "li1"], updated: "2h ago", read: "9 min", pct: 0.86,
+    deck: "Every local-first post I read argues about CRDTs. Almost none of them argue about the thing that actually decides whether your app is local-first: which row your code believes when the two disagree.",
+    outline: [{ h: "The argument nobody has", done: true }, { h: "Offline mode is not local-first", done: true }, { h: "Which row do you believe?", done: true }, { h: "Timestamps without timezones are lies", done: true }, { h: "What I would do differently", done: false }],
+    sections: [
+      { h: "The argument nobody has", p: ["Every local-first post I read argues about CRDTs. Almost none of them argue about the thing that actually decides whether your app is local-first: which row your code believes when the two disagree.", "That sounds like a small implementation question. It is not. It is the whole architecture, and every other decision — sync, conflict, offline, scheduling — is downstream of it."] },
+      { h: "Offline mode is not local-first", p: ["Offline mode is a degraded state you recover from. Local-first is the normal state, and the network is the thing that is optional. If your app has a spinner on cold start, you built a thin client with a cache.", "Timestamps need a timezone or they are lies. A date without a time of day cannot schedule anything."] },
+    ] },
+  { id: "lf2", title: "The manual publish decision", words: 880, status: "scheduled", dest: ["md1"], updated: "yesterday", read: "4 min", pct: 1, when: "Mon 28 Jul · 09:00",
+    deck: "Auto-posting to Instagram needs Meta app review. Here is what I shipped on day one instead, and why it turned out to be the better product.",
+    outline: [{ h: "The wall", done: true }, { h: "What shipped instead", done: true }, { h: "Why it stayed", done: true }],
+    sections: [
+      { h: "The wall", p: ["Meta app review takes weeks and asks for a screencast of a product you have not shipped. That is a chicken-and-egg problem dressed as a compliance process.", "So the first version did not publish to Instagram at all. It prepared the post, put it on the calendar, and fired a native notification at the scheduled minute."] },
+      { h: "What shipped instead", p: ["A notification with the caption already on the clipboard and the media already in the share sheet. Nine seconds of work, once a day.", "Every user I showed it to assumed it was the premium behaviour."] },
+    ] },
+  { id: "lf3", title: "Three columns, forever", words: 310, status: "draft", dest: [], updated: "4 days ago", read: "2 min", pct: 0.18,
+    deck: "A note on the one constraint that has survived every redesign of this app.",
+    outline: [{ h: "The rule", done: true }, { h: "Every time I broke it", done: false }],
+    sections: [{ h: "The rule", p: ["Never more than three columns. Sidebar, subject, inspector. Everything else is a mode, not a column."] }] },
+  { id: "lf4", title: "Eleven accounts and one person", words: 1620, status: "published", dest: ["md1"], updated: "11 Jul", read: "7 min", pct: 1, views: 4820, reads: 1970, ratio: 41, claps: 214,
+    deck: "What actually breaks when a solo founder runs eleven social accounts across five platforms, and which of those breakages are tooling problems.",
+    outline: [{ h: "The roster", done: true }, { h: "What breaks first", done: true }, { h: "What I built", done: true }],
+    sections: [
+      { h: "The roster", p: ["Three on X, four on Instagram, two Medium publications, one LinkedIn, one Threads. Two of those handles belong to every project; the rest belong to exactly one.", "That asymmetry is the whole reason a flat account list stops working at about eight."] },
+      { h: "What breaks first", p: ["Not posting. Remembering. The failure mode of eleven accounts is that four of them quietly go a fortnight without anything going out, and nothing in your tooling says so."] },
+    ] },
+  { id: "lf5", title: "A schedule is a shape", words: 1180, status: "published", dest: ["md1", "li1"], updated: "28 Jun", read: "5 min", pct: 1, views: 9140, reads: 3210, ratio: 35, claps: 486,
+    deck: "Vignelli's transit diagram argues that a timetable is a picture. Most scheduling tools disagree, and they are wrong.",
+    outline: [{ h: "The diagram", done: true }, { h: "Lists lie about time", done: true }],
+    sections: [
+      { h: "The diagram", p: ["The 1972 New York subway map is not a map. It is a schematic that tells you the only thing you need at the moment you need it: which line, which direction, how many stops.", "A content calendar wants the same treatment. Not a grid of every day, but a picture of what leaves and when."] },
+      { h: "Lists lie about time", p: ["A list of scheduled posts sorted by date is technically correct and completely useless for the question people actually ask, which is: does next week look thin?"] },
+    ] },
+];
+
+/* ── the plan: kanban + calendar over the same items ───────────────────── */
+const PLAN = [
+  { id: "k1",  col: "idea",      acct: null,  kind: "note",     body: "Departure board for the week — posts leave from gates, accounts are destinations.", age: "2d" },
+  { id: "k2",  col: "idea",      acct: null,  kind: "note",     body: "Ask r/SideProject what people actually use to schedule.", age: "4d" },
+  { id: "k3",  col: "idea",      acct: "ig1", kind: "carousel", body: "Carousel from the eight-screens annotation. Reuse the launch-week folder.", age: "5d" },
+  { id: "k4",  col: "idea",      acct: "x1",  kind: "post",     body: "Why @fieldnoteco went quiet, as a post about pruning projects.", age: "1w" },
+  { id: "k5",  col: "drafting",  acct: "x1",  kind: "thread",   body: "The manual-publish decision, and why it shipped on day one instead of never.", age: "6d", parts: 4, blocker: "Needs a closing part" },
+  { id: "k6",  col: "drafting",  acct: "ig2", kind: "carousel", body: "Fieldnote's field guide, ten slides. Caption written, slides not made.", age: "3d", blocker: "No media" },
+  { id: "k7",  col: "drafting",  acct: "ig4", kind: "reel",     body: "Sidebar collapse, 24 seconds. Needs a first line.", age: "1d", assets: 1 },
+  { id: "k8",  col: "ready",     acct: "x2",  kind: "post",     body: "Nobody asks how many columns your app has until it has four.", age: "9d", blocker: "No time set" },
+  { id: "k9",  col: "ready",     acct: "li1", kind: "article",  body: "Local-first is a promise, not a stack detail — one section from done.", age: "2h" },
+  { id: "k10", col: "scheduled", acct: "x1",  kind: "thread",   body: "Five things I got wrong about local-first before shipping one.", when: "Today · 09:30", parts: 5 },
+  { id: "k11", col: "scheduled", acct: "ig1", kind: "carousel", body: "Eight screens of Validate, annotated.", when: "Today · 11:00", assets: 3 },
+  { id: "k12", col: "scheduled", acct: "x2",  kind: "post",     body: "Shipping is a design constraint.", when: "Today · 14:15" },
+  { id: "k13", col: "scheduled", acct: "ig4", kind: "reel",     body: "42 seconds: dragging a post across the calendar.", when: "Today · 17:45", assets: 1 },
+  { id: "k14", col: "scheduled", acct: "md1", kind: "article",  body: "The manual publish decision.", when: "Mon 28 · 09:00" },
+  { id: "k15", col: "scheduled", acct: "th1", kind: "post",     body: "Threads mirror of this morning's thread.", when: "Tue 29 · 10:00" },
+  { id: "k16", col: "published", acct: "x2",  kind: "post",     body: "Nobody asks how many columns your app has until it has four.", when: "17 Jul", reach: 14200 },
+  { id: "k17", col: "published", acct: "ig1", kind: "carousel", body: "Launch week, ten cards. The whole story in one swipe.", when: "11 Jul", reach: 15400 },
+  { id: "k18", col: "published", acct: "li1", kind: "article",  body: "A schedule is a shape.", when: "28 Jun", reach: 9140 },
+];
+const PLAN_COLS = [
+  { id: "idea",      label: "Ideas",     note: "no shape yet" },
+  { id: "drafting",  label: "Drafting",  note: "being written" },
+  { id: "ready",     label: "Ready",     note: "needs a time" },
+  { id: "scheduled", label: "Scheduled", note: "will go out" },
+  { id: "published", label: "Published", note: "carries numbers" },
+];
+
+const MONTH = {
+  label: "July 2026", first: 2, days: 31, today: 26,
+  cells: {
+    1: { reach: 9100 }, 2: { reach: 4200 }, 3: { reach: 21400 }, 6: { reach: 7700 }, 7: { reach: 3100 },
+    8: { reach: 33800 }, 9: { reach: 12200 }, 10: { reach: 2600 }, 11: { reach: 26100 }, 13: { reach: 8400 },
+    14: { reach: 11900 }, 15: { reach: 41200 }, 16: { reach: 3300 }, 17: { reach: 19700 }, 18: { reach: 6100 },
+    20: { reach: 16800 }, 21: { reach: 8000 }, 22: { reach: 26700 }, 23: { reach: 12100 }, 24: { reach: 30700 }, 25: { reach: 4400 },
+    26: { reach: 8200, sched: [
+      { t: "09:30", kind: "thread",   acct: "x1",  body: "Five things I got wrong about local-first" },
+      { t: "11:00", kind: "carousel", acct: "ig1", body: "Eight screens, annotated" },
+      { t: "14:15", kind: "post",     acct: "x2",  body: "Shipping is a design constraint" },
+      { t: "17:45", kind: "reel",     acct: "ig4", body: "Drag to reschedule" },
+      { t: "19:00", kind: "post",     acct: "x1",  body: "Meta app review", failed: true },
+    ] },
+    27: { sched: [
+      { t: "08:00", kind: "post",  acct: "x2",  body: "Sunday reading: Vignelli" },
+      { t: "12:30", kind: "image", acct: "ig4", body: "Desk, 7am" },
+      { t: "16:00", kind: "thread",acct: "x1",  body: "Captions leave the app" },
+    ] },
+    28: { sched: [
+      { t: "09:00", kind: "article",  acct: "md1", body: "Local-first is a promise" },
+      { t: "13:00", kind: "carousel", acct: "ig1", body: "Six tile shapes" },
+      { t: "18:30", kind: "post",     acct: "ig3", body: "Harbor's changelog" },
+    ] },
+    29: { sched: [{ t: "10:00", kind: "post", acct: "th1", body: "Threads mirror" }] },
+    30: { sched: [{ t: "09:00", kind: "thread", acct: "x2", body: "On pruning projects" }, { t: "15:00", kind: "image", acct: "ig4", body: "Studio, evening" }] },
+    31: { sched: [{ t: "09:00", kind: "article", acct: "md2", body: "Rust timers, honestly" }] },
+  },
+};
+
+const WEEK = {
+  days: [
+    { key: "mon", label: "Mon", date: "21" }, { key: "tue", label: "Tue", date: "22" },
+    { key: "wed", label: "Wed", date: "23" }, { key: "thu", label: "Thu", date: "24" },
+    { key: "fri", label: "Fri", date: "25" }, { key: "sat", label: "Sat", date: "26", today: true },
+    { key: "sun", label: "Sun", date: "27" },
+  ],
+  cells: {
+    "x1|mon": [{ t: "09:00", body: "Shipping is a design constraint" }],
+    "x1|wed": [{ t: "10:30", body: "Why manual publish shipped first" }],
+    "x1|sat": [{ t: "09:30", body: "Five things I got wrong" }, { t: "19:00", body: "Meta app review is the reason…", failed: true }],
+    "x1|sun": [{ t: "16:00", body: "Captions leave the app" }],
+    "x2|tue": [{ t: "08:00", body: "Nobody asks how many columns…" }],
+    "x2|sat": [{ t: "14:15", body: "Shipping is a design constraint" }],
+    "x2|sun": [{ t: "08:00", body: "Sunday reading: Vignelli" }],
+    "ig1|mon": [{ t: "12:00", body: "Desk, 7am" }],
+    "ig1|thu": [{ t: "11:00", body: "Six tile shapes" }],
+    "ig1|sat": [{ t: "11:00", body: "Eight screens, annotated" }],
+    "ig1|sun": [{ t: "12:30", body: "Calendar, month grid" }],
+    "ig4|wed": [{ t: "18:00", body: "Sidebar collapse" }],
+    "ig4|sat": [{ t: "17:45", body: "Drag to reschedule" }],
+    "th1|wed": [{ t: "15:00", body: "Threads mirror of the thread" }],
+    "th1|sat": [{ t: "17:45", body: "Drag to reschedule" }],
+    "li1|mon": [{ t: "09:00", body: "Local-first is a promise" }],
+    "md1|thu": [{ t: "09:00", body: "Eleven accounts, one person" }],
+  },
+};
+
+const ANALYTICS = {
+  hours: ["06", "09", "11", "13", "15", "17", "19", "21"],
+  heat: [
+    [12, 61, 44, 38, 29, 47, 71, 33], [18, 74, 52, 41, 33, 55, 66, 28],
+    [14, 68, 47, 36, 44, 62, 58, 31], [21, 82, 61, 44, 38, 51, 74, 36],
+    [16, 57, 38, 31, 27, 44, 52, 24], [9, 41, 66, 52, 44, 78, 61, 41],
+    [7, 33, 58, 47, 36, 64, 44, 29],
+  ],
+};
+
+/* Every published piece, with the metrics a channel page has to show. */
+const POSTS = [
+  { id: "tp1", acct: "x2",  kind: "post",     date: "24 Jul", tone: 0, reach: 21300, imp: 38400, likes: 1180, comments: 92,  shares: 214, saves: 341, eng: 4.8,  body: "Shipping is a design constraint. Every week you don't ship…" },
+  { id: "tp2", acct: "x1",  kind: "thread",   date: "22 Jul", tone: 0, reach: 18900, imp: 31200, likes: 964,  comments: 141, shares: 302, saves: 288, eng: 6.1,  body: "Five things I got wrong about local-first before shipping one." },
+  { id: "tp3", acct: "x2",  kind: "post",     date: "17 Jul", tone: 0, reach: 14200, imp: 22800, likes: 452,  comments: 38,  shares: 96,  saves: 121, eng: 3.2,  body: "Nobody asks how many columns your app has until it has four." },
+  { id: "tp4", acct: "ig1", kind: "carousel", date: "23 Jul", tone: 2, reach: 12100, imp: 19400, likes: 1016, comments: 74,  shares: 188, saves: 640, eng: 8.4,  body: "The eight screens of Validate, annotated." },
+  { id: "tp5", acct: "ig4", kind: "reel",     date: "24 Jul", tone: 1, reach: 9400,  imp: 26800, likes: 1052, comments: 66,  shares: 411, saves: 388, eng: 11.2, body: "42 seconds: dragging a post across the calendar." },
+  { id: "tp6", acct: "x1",  kind: "thread",   date: "18 Jul", tone: 0, reach: 8800,  imp: 14100, likes: 388,  comments: 51,  shares: 74,  saves: 92,  eng: 4.1,  body: "Why I stopped writing captions in the app that publishes them." },
+  { id: "tp7", acct: "ig1", kind: "carousel", date: "19 Jul", tone: 7, reach: 6600,  imp: 10200, likes: 512,  comments: 29,  shares: 88,  saves: 301, eng: 7.1,  body: "Six tile shapes, one grid." },
+  { id: "tp8", acct: "li1", kind: "article",  date: "21 Jul", tone: 4, reach: 5900,  imp: 9100,  likes: 244,  comments: 41,  shares: 62,  saves: 55,  eng: 4.4,  body: "Eleven accounts and one person." },
+  { id: "tp9", acct: "md1", kind: "article",  date: "11 Jul", tone: 4, reach: 4820,  imp: 4820,  likes: 214,  comments: 18,  shares: 31,  saves: 44,  eng: 41,   body: "Eleven accounts and one person." },
+  { id: "tp10",acct: "ig4", kind: "image",    date: "22 Jul", tone: 3, reach: 7800,  imp: 12600, likes: 604,  comments: 33,  shares: 71,  saves: 210, eng: 6.9,  body: "Desk, 7am." },
+  { id: "tp11",acct: "th1", kind: "post",     date: "20 Jul", tone: 6, reach: 5200,  imp: 8400,  likes: 288,  comments: 24,  shares: 44,  saves: 61,  eng: 5.8,  body: "Composer, end to end." },
+  { id: "tp12",acct: "ig3", kind: "image",    date: "17 Jul", tone: 9, reach: 2100,  imp: 3400,  likes: 112,  comments: 9,   shares: 12,  saves: 40,  eng: 5.1,  body: "Calendar, month grid." },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLYPHS
+   ═══════════════════════════════════════════════════════════════════════════ */
+const G = {
+  x: `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M13.9 10.6 21.3 2h-1.8l-6.4 7.5L8 2H2l7.8 11.3L2 22h1.8l6.8-7.9L16 22h6l-8.1-11.4Zm-2.4 2.8-.8-1.1L4.4 3.3h2.7l5.1 7.3.8 1.1 6.6 9.4h-2.7l-5.4-7.7Z"/></svg>`,
+  instagram: `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.9" d="M7 2.9h10A4.1 4.1 0 0 1 21.1 7v10a4.1 4.1 0 0 1-4.1 4.1H7A4.1 4.1 0 0 1 2.9 17V7A4.1 4.1 0 0 1 7 2.9Z"/><circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor"/></svg>`,
+  threads: `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M16.5 11.3c-.1 0-.2-.1-.3-.1-.2-3.2-1.9-5-4.8-5-2 0-3.6.9-4.5 2.4l1.6 1.1c.7-1 1.7-1.3 2.9-1.3 1.7 0 2.8.9 3 2.6-.7-.2-1.5-.3-2.3-.3-2.6 0-4.4 1.4-4.4 3.5 0 2 1.7 3.3 3.7 3.3 1.8 0 3.1-.8 3.8-2.2.5.8.8 1.7.9 2.8-1 1-2.6 1.6-4.7 1.6-3.9 0-6.4-2.6-6.4-7.2S7.6 5 11.5 5c3 0 5.1 1.5 5.9 4.3l2-.5C18.4 5 15.6 3 11.5 3 6.3 3 3 6.5 3 12s3.3 9 8.5 9c3 0 5.2-1 6.5-2.6 1-1.2 1.4-2.7 1.3-4.4-.1-1.3-.5-2-1.8-2.7Zm-4.8 4.2c-1 0-1.8-.5-1.8-1.4 0-1 1-1.6 2.5-1.6.7 0 1.4.1 2 .3-.2 1.7-1.2 2.7-2.7 2.7Z"/></svg>`,
+  linkedin: `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.5h4v11H3v-11Zm6.5 0h3.8v1.5h.06c.53-.95 1.83-1.95 3.77-1.95 4.03 0 4.77 2.5 4.77 5.76v5.69h-4v-5.05c0-1.2-.02-2.75-1.75-2.75-1.76 0-2.03 1.31-2.03 2.66v5.14h-4v-11Z"/></svg>`,
+  medium: `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><ellipse cx="6.6" cy="12" rx="6.4" ry="6.9" fill="currentColor"/><ellipse cx="16.9" cy="12" rx="2.7" ry="6.3" fill="currentColor"/><ellipse cx="22.3" cy="12" rx="1.1" ry="5.5" fill="currentColor"/></svg>`,
+  reddit: `<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M22 12a2.1 2.1 0 0 0-3.55-1.5 10.3 10.3 0 0 0-5.4-1.7l.92-4.33 3 .64a1.75 1.75 0 1 0 .2-1.2l-3.6-.77a.6.6 0 0 0-.72.46l-1.07 5.02a10.3 10.3 0 0 0-5.3 1.7A2.1 2.1 0 1 0 4 14.1c0 .13.02.26.04.38C4 14.8 4 15.1 4 15.4c0 3.1 3.6 5.6 8 5.6s8-2.5 8-5.6c0-.3 0-.6-.05-.9A2.1 2.1 0 0 0 22 12ZM8.2 13.6a1.35 1.35 0 1 1 2.7 0 1.35 1.35 0 0 1-2.7 0Zm7.5 3.9c-.9.9-2.6 1-3.7 1s-2.8-.1-3.7-1a.4.4 0 0 1 .57-.57c.6.6 1.9.8 3.13.8s2.53-.2 3.13-.8a.4.4 0 0 1 .57.57Zm-.6-2.55a1.35 1.35 0 1 1 0-2.7 1.35 1.35 0 0 1 0 2.7Z"/></svg>`,
+  search: `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.6 10.6 3.1 3.1" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`,
+  plus: `<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+  chev: `<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="m4.5 6.5 3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  left: `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  right: `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  dots: `<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="3.4" cy="8" r="1.25" fill="currentColor"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><circle cx="12.6" cy="8" r="1.25" fill="currentColor"/></svg>`,
+  globe: `<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M2.4 8h11.2M8 2.4c1.5 1.6 2.2 3.5 2.2 5.6S9.5 12 8 13.6C6.5 12 5.8 10.1 5.8 8S6.5 4 8 2.4Z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 5.2v13.6L19 12 8 5.2Z"/></svg>`,
+  check: `<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="m3.5 8.4 3 3 6-6.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  warn: `<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M8 2.6 14.4 13.4H1.6L8 2.6Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6.6v3.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".85" fill="currentColor"/></svg>`,
+  up: `<svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M6 9.5V2.5m0 0L3 5.5M6 2.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  down: `<svg viewBox="0 0 12 12" width="9" height="9" aria-hidden="true"><path d="M6 2.5v7m0 0 3-3M6 9.5l-3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  lock: `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="3.2" y="7" width="9.6" height="6.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.6 7V5.2a2.4 2.4 0 0 1 4.8 0V7" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>`,
+  close: `<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  cal: `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="2.2" y="3.4" width="11.6" height="10.4" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.2 6.6h11.6M5.4 2.2v2.4M10.6 2.2v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+  grid: `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="2.2" y="2.2" width="4.6" height="11.6" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="9.2" y="2.2" width="4.6" height="7.2" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`,
+  lib: `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="2.2" y="2.4" width="5" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="8.8" y="2.4" width="5" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="2.2" y="8.6" width="5" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="8.8" y="8.6" width="5" height="5" rx="1.1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`,
+  doc: `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.6 2h5.2l3.6 3.6V14H3.6V2Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M8.6 2v3.8h3.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`,
+  film: `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="2" y="3.2" width="12" height="9.6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M5.4 3.2v9.6M10.6 3.2v9.6" stroke="currentColor" stroke-width="1.1"/></svg>`,
+  chart: `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2.4 13.6V9.4M6.1 13.6V4.2M9.9 13.6V7M13.6 13.6V2.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+};
+
+const glyph = (p) => G[p] || G.globe;
+const delta = (d) => d === 0 ? `<span class="delta flat">—</span>`
+  : `<span class="delta ${d > 0 ? "up" : "dn"}">${d > 0 ? G.up : G.down}${Math.abs(d).toFixed(1)}%</span>`;
+const av = (a, cls = "") => `<span class="av ${cls}" style="--ch:${a.tint}">${esc(a.name[0])}</span>`;
+const healthChip = (a) =>
+  a.health === "reauth" ? `<span class="hchip bad">${G.warn} Reconnect</span>`
+  : a.health === "quiet" ? `<span class="hchip warn">Quiet · ${esc(a.last)}</span>`
+  : `<span class="hchip ok">${G.check} Healthy</span>`;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHARTS — smoothed, macOS-soft.
+   Every plot is a monotone cubic through real points: no overshoot, no corner,
+   no gradient standing in for a line. Grid is a hairline at 7% ink; the fill is
+   a 14%→0 wash of the series' own colour.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Fritsch–Carlson monotone cubic → cubic-bezier path. Smooth without wobble. */
+function smooth(pts) {
+  const n = pts.length;
+  if (n < 2) return "";
+  const dx = [], dy = [], m = [];
+  for (let i = 0; i < n - 1; i++) { dx.push(pts[i + 1][0] - pts[i][0]); dy.push(pts[i + 1][1] - pts[i][1]); m.push(dy[i] / dx[i]); }
+  const t = [m[0]];
+  for (let i = 1; i < n - 1; i++) {
+    if (m[i - 1] * m[i] <= 0) t.push(0);
+    else {
+      const w1 = 2 * dx[i] + dx[i - 1], w2 = dx[i] + 2 * dx[i - 1];
+      t.push((w1 + w2) / (w1 / m[i - 1] + w2 / m[i]));
+    }
+  }
+  t.push(m[n - 2]);
+  let d = `M${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += `C${(pts[i][0] + h).toFixed(2)} ${(pts[i][1] + h * t[i]).toFixed(2)},`
+       + `${(pts[i + 1][0] - h).toFixed(2)} ${(pts[i + 1][1] - h * t[i + 1]).toFixed(2)},`
+       + `${pts[i + 1][0].toFixed(2)} ${pts[i + 1][1].toFixed(2)}`;
+  }
+  return d;
+}
+
+let uid = 0;
+function areaChart(series, { w = 720, h = 190, fill = true, grid = 4, labels = null, pad = 10 } = {}) {
+  const id = `g${uid++}`;
+  const n = series[0].pts.length;
+  const max = Math.max(...series.flatMap((s) => s.pts), 1);
+  const px = (i) => (i / (n - 1)) * w;
+  const py = (v) => h - pad - (v / max) * (h - pad * 2);
+  const gl = Array.from({ length: grid + 1 }, (_, k) => {
+    const y = (pad + (k / grid) * (h - pad * 2)).toFixed(1);
+    return `<line class="gl" x1="0" x2="${w}" y1="${y}" y2="${y}"/>`;
+  }).join("");
+  const defs = series.map((s, k) => `<linearGradient id="${id}-${k}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${s.color}" stop-opacity=".20"/>
+      <stop offset="1" stop-color="${s.color}" stop-opacity="0"/></linearGradient>`).join("");
+  const body = series.map((s, k) => {
+    const pts = s.pts.map((v, i) => [px(i), py(v)]);
+    const d = smooth(pts);
+    const area = `${d}L${w} ${h - pad}L0 ${h - pad}Z`;
+    const last = pts[pts.length - 1];
+    return `${fill && k === 0 ? `<path class="cfill" d="${area}" fill="url(#${id}-${k})"/>` : ""}
+      <path class="cl" d="${d}" stroke="${s.color}"/>
+      <circle class="cdot" cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="${s.color}"/>`;
+  }).join("");
+  const xl = labels ? labels.map((l, i) => `<text class="xl" x="${(i / (labels.length - 1) * w).toFixed(1)}" y="${h + 12}" text-anchor="${i === 0 ? "start" : i === labels.length - 1 ? "end" : "middle"}">${esc(l)}</text>`).join("") : "";
+  return `<svg class="chart" viewBox="0 -2 ${w} ${h + (labels ? 18 : 4)}" preserveAspectRatio="none"><defs>${defs}</defs>${gl}${body}${xl}</svg>`;
+}
+
+function sparkline(pts, color, { w = 190, h = 40 } = {}) {
+  const id = `s${uid++}`;
+  const max = Math.max(...pts, 1), min = Math.min(...pts);
+  const span = max - min || 1;
+  const xy = pts.map((p, i) => [(i / (pts.length - 1)) * w, h - 3 - ((p - min) / span) * (h - 8)]);
+  const d = smooth(xy);
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${color}" stop-opacity=".22"/><stop offset="1" stop-color="${color}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${d}L${w} ${h}L0 ${h}Z" fill="url(#${id})"/>
+    <path class="sline" d="${d}" style="--ch:${color}"/></svg>`;
+}
+
+function barChart(vals, color, { w = 300, h = 70 } = {}) {
+  const max = Math.max(...vals, 1);
+  const bw = w / vals.length;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${
+    vals.map((v, i) => {
+      const bh = (v / max) * (h - 4);
+      return `<rect x="${(i * bw + bw * .18).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${(bw * .64).toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="${color}" opacity="${(0.32 + 0.55 * (v / max)).toFixed(2)}"/>`;
+    }).join("")}</svg>`;
+}
+
+const cumulative = (pts) => pts.reduce((acc, v) => (acc.push((acc.at(-1) || 0) + v), acc), []);
+const lastN = (arr, n) => arr.slice(-n);
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   STATE + ROUTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+const state = {
+  route: "plan",          // plan | library | articles | assets | analytics
+  planView: "kanban",     // kanban | calendar
+  calView: "month",       // month | week
+  planFilter: "all",      // all | <platform> | <accountId>
+  anView: "overtime",     // overtime | cumulative
+  anRange: 30,            // 7 | 30 | 90
+  anFilter: "all",
+  channel: null,          // account id → one-channel view
+  chTab: "overview",      // overview | posts | audience
+  article: null,          // article id → long room
+  day: null,              // calendar day → drawer
+};
+
+const NAV = [
+  { id: "plan",      label: "Plan",      icon: "cal",   c: 17 },
+  { id: "library",   label: "Library",   icon: "lib",   c: 342 },
+  { id: "articles",  label: "Articles",  icon: "doc",   c: 5 },
+  { id: "assets",    label: "Assets",    icon: "film",  c: 214 },
+  { id: "analytics", label: "Analytics", icon: "chart", c: null },
+];
+
+const $ = (s) => document.querySelector(s);
+function go(patch) { Object.assign(state, patch); render(); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderSide() {
+  const scoped = ACCOUNTS.filter((a) => a.project === CURRENT.id);
+  const global = ACCOUNTS.filter((a) => a.project === null);
+  const other  = ACCOUNTS.filter((a) => a.project && a.project !== CURRENT.id);
+
+  const row = (a) => `<button class="arow" data-ch="${a.id}">
+    <span class="av sm" style="--ch:${a.tint}">${esc(a.name[0])}<i class="dot" data-on="${a.connected}"></i></span>
+    <span class="ah">${esc(a.handle)}</span>
+    <i class="pgl">${glyph(a.platform)}</i>
+    ${a.health === "reauth" ? `<span class="pend bad">${G.warn}</span>`
+      : a.health === "quiet" ? `<span class="pend">quiet</span>`
+      : `<span class="pend">${a.queued || 0}</span>`}
+  </button>`;
+
+  const group = (label, list, note = "") => list.length ? `<div class="agroup">
+    <div class="ahead"><span>${esc(label)}</span>${note ? `<em>${esc(note)}</em>` : ""}<i class="ln"></i></div>
+    ${list.map(row).join("")}</div>` : "";
+
+  $("#side").innerHTML = `
+    <div class="lights"><i></i><i></i><i></i></div>
+    <button class="proj">
+      <span class="pmark">${CURRENT.mark}</span>
+      <span class="pname"><b>${esc(CURRENT.name)}</b><em>${CURRENT.accounts} accounts · ${CURRENT.queued} queued</em></span>
+      ${G.chev}
+    </button>
+    <label class="field">${G.search}<input placeholder="Search everything" spellcheck="false"><kbd>⌘K</kbd></label>
+    <nav class="nav">
+      ${NAV.map((n) => `<button class="navrow${n.id === state.route ? " on" : ""}" data-go="${n.id}">
+        ${G[n.icon]}<span class="lbl">${esc(n.label)}</span>${n.c !== null ? `<span class="c">${n.c}</span>` : ""}
+      </button>`).join("")}
+    </nav>
+    <div class="sechead railsec">Channels <span class="meta">${ACCOUNTS.length}</span></div>
+    <div class="accts">
+      ${group(CURRENT.name, scoped)}
+      ${group("Everywhere", global, "all projects")}
+      ${group("Other projects", other)}
+      <button class="addacct">${G.plus}<span>Connect a channel…</span></button>
+    </div>
+    <footer class="nextdue"><i class="pulse"></i><span>Next out <b>in 2h 14m</b> · @validateapp</span></footer>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHARED PIECES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* One filter rail, used by Plan and Analytics. Platforms first, then the
+   eleven handles — because "show me only Instagram" and "show me only
+   @kartik.builds" are different questions and both get asked. */
+function filterRail(sel, onAttr) {
+  return `<div class="filters">
+    <button class="fchip${sel === "all" ? " on" : ""}" ${onAttr}="all">All channels<span class="c">${ACCOUNTS.length}</span></button>
+    <i class="fdiv"></i>
+    ${PLATFORMS.map((p) => `<button class="fchip${sel === p.id ? " on" : ""}" ${onAttr}="${p.id}">${glyph(p.id)}${esc(p.label)}<span class="c">${p.n}</span></button>`).join("")}
+    <i class="fdiv"></i>
+    ${ACCOUNTS.map((a) => `<button class="fchip${sel === a.id ? " on" : ""}" ${onAttr}="${a.id}" title="${esc(a.handle)}">
+      <i class="swatch" style="--ch:${a.tint}"></i>${esc(a.handle)}</button>`).join("")}
+  </div>`;
+}
+
+const passes = (a, f) => f === "all" || a.id === f || a.platform === f;
+
+function channelLegend() {
+  return `<div class="legend">
+    <span class="sechead" style="margin-right:4px">Channel key</span>
+    ${ACCOUNTS.map((a) => `<span class="lgi"><i style="--ch:${a.tint}"></i>${esc(a.handle)}</span>`).join("")}
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREEN · PLAN  (kanban ⇄ calendar, one toggle top-right)
+   ═══════════════════════════════════════════════════════════════════════════ */
+function screenPlan() {
+  const bar = `<header class="bar">
+    <div class="ttl"><h1>Plan</h1><div class="sub">17 scheduled · 9 in progress · ${esc(CURRENT.name)}</div></div>
+    <span class="grow"></span>
+    ${state.planView === "calendar" ? `<div class="seg" style="margin-right:4px">
+        <button class="${state.calView === "month" ? "on" : ""}" data-cal="month">Month</button>
+        <button class="${state.calView === "week" ? "on" : ""}" data-cal="week">Channel lanes</button>
+      </div>` : ""}
+    <div class="seg">
+      <button class="${state.planView === "kanban" ? "on" : ""}" data-plan="kanban">${G.grid} Kanban</button>
+      <button class="${state.planView === "calendar" ? "on" : ""}" data-plan="calendar">${G.cal} Calendar</button>
+    </div>
+    <button class="btn pri">${G.plus} New</button>
+  </header>`;
+
+  const body = state.planView === "kanban" ? planKanban()
+    : state.calView === "month" ? planMonth() : planWeek();
+
+  return bar + `<div class="scroll">${filterRail(state.planFilter, "data-pf")}${body}</div>`;
+}
+
+function planKanban() {
+  const cards = PLAN.filter((c) => !c.acct || passes(acct(c.acct), state.planFilter) || (state.planFilter === "all"));
+  return `<div class="kan">
+    ${PLAN_COLS.map((col) => {
+      const items = cards.filter((c) => c.col === col.id && (state.planFilter === "all" || (c.acct && passes(acct(c.acct), state.planFilter))));
+      return `<section class="kcol">
+        <header class="kcolh"><b>${esc(col.label)}</b><span class="c">${items.length}</span><em>${esc(col.note)}</em></header>
+        ${items.map(kanCard).join("") || `<p class="meta" style="padding:6px 4px">Nothing here.</p>`}
+        <button class="kadd">${G.plus} Add</button>
+      </section>`;
+    }).join("")}
+  </div>` + channelLegend();
+}
+
+function kanCard(c) {
+  const a = c.acct ? acct(c.acct) : null;
+  return `<article class="kcard" style="--ch:${a ? a.tint : "var(--rule-2)"}">
+    <div class="ktop">
+      ${a ? `${av(a, "sm")}<span class="kh">${esc(a.handle)}</span>` : `<span class="kh" style="color:var(--ink-4)">Unassigned</span>`}
+      <span class="grow"></span>
+      <span class="k">${esc(KIND[c.kind])}${c.parts ? " · " + c.parts : ""}</span>
+    </div>
+    <div class="kbody">${esc(c.body)}</div>
+    ${c.assets ? `<div class="kstrip">${Array.from({ length: Math.min(3, c.assets) }, () => "<i></i>").join("")}</div>` : ""}
+    <div class="kfoot">
+      ${c.when ? `<span class="kwhen${c.col === "published" ? " dim" : ""}">${esc(c.when)}</span>`
+        : `<span class="kwhen dim">${esc(c.age || "—")}</span>`}
+      <span class="grow"></span>
+      ${c.reach ? `<span class="meta">${num(c.reach)} reach</span>`
+        : c.blocker ? `<span class="hchip warn">${esc(c.blocker)}</span>` : `<span class="hchip ok">${G.check}</span>`}
+    </div>
+  </article>`;
+}
+
+function planMonth() {
+  const cells = [];
+  const maxReach = Math.max(...Object.values(MONTH.cells).map((c) => c.reach || 0));
+  for (let i = 0; i < MONTH.first; i++) cells.push(`<div class="mcell pad"></div>`);
+  for (let d = 1; d <= MONTH.days; d++) {
+    const c = MONTH.cells[d] || {};
+    const past = d < MONTH.today;
+    const sched = (c.sched || []).filter((s) => passes(acct(s.acct), state.planFilter));
+    cells.push(`<button class="mcell${d === MONTH.today ? " today" : ""}${past ? " past" : ""}" data-day="${d}">
+      <div class="mday"><b>${d}</b>${d === MONTH.today ? "<em>today</em>" : ""}
+        ${past && c.reach ? `<span class="mreach">${num(c.reach)}</span>` : ""}</div>
+      ${past && c.reach ? `<i class="mbar" style="--p:${(c.reach / maxReach).toFixed(2)}"></i>` : ""}
+      ${sched.slice(0, 3).map((s) => {
+        const a = acct(s.acct);
+        return `<span class="mitem" style="--ch:${a.tint}"${s.failed ? ' data-status="failed"' : ""}>
+          <i class="pgl">${glyph(a.platform)}</i><em>${s.t}</em><span>${esc(s.body)}</span></span>`;
+      }).join("")}
+      ${sched.length > 3 ? `<span class="mmore">+${sched.length - 3} more</span>` : ""}
+    </button>`);
+  }
+  return `<div class="mhead">${["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span>${d}</span>`).join("")}</div>
+    <div class="mgrid">${cells.join("")}</div>
+    <p class="anote" style="padding:0 18px">Every chip is tinted by the channel it leaves from, and carries that channel's platform mark. Past days keep the reach they earned. Click a day for the full list.</p>
+    ${channelLegend()}`;
+}
+
+function planWeek() {
+  const lanes = ACCOUNTS.filter((a) => passes(a, state.planFilter));
+  return `<div class="lanes">
+    <div class="lanehead">
+      <div class="corner">${lanes.length} channels</div>
+      ${WEEK.days.map((d) => `<div class="dhead${d.today ? " today" : ""}"><b>${d.label}</b><span class="meta">${d.date}</span></div>`).join("")}
+    </div>
+    ${lanes.map((a) => `<div class="lane" style="--ch:${a.tint}">
+      <div class="lanelab">${av(a, "sm")}<span class="ah">${esc(a.handle)}</span><i class="pgl">${glyph(a.platform)}</i>
+        <span class="cadmini">${a.cadence.a}/${a.cadence.t}</span></div>
+      ${WEEK.days.map((d) => {
+        const items = WEEK.cells[`${a.id}|${d.key}`] || [];
+        return `<div class="cellw${d.today ? " today" : ""}">${items.map((it) => `
+          <button class="ev"${it.failed ? ' data-status="failed"' : ""}>
+            <span class="evt">${it.t}</span><span class="evb">${esc(it.body)}</span></button>`).join("")}</div>`;
+      }).join("")}
+    </div>`).join("")}
+  </div>
+  <p class="anote" style="padding:0 18px 18px">One lane per channel. An empty run of days on a lane is the thing you are meant to see.</p>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREEN · LIBRARY
+   ═══════════════════════════════════════════════════════════════════════════ */
+function tileWeight(it) {
+  if (it.kind === "reel") return 1.78;
+  if (it.kind === "carousel") return 1.25;
+  if (it.kind === "article") return 1.05;
+  if (it.kind === "image") { const [w, h] = it.ratio.split("/").map(Number); return h / w + 0.1; }
+  return 0.34 + Math.min(1.1, (it.body?.length ?? 0) / 150);
+}
+
+function tile(it) {
+  const a = it.account ? acct(it.account) : null;
+  const cap = `<div class="cap">${a ? `${av(a, "sm")}<span class="ch">${esc(a.handle)}</span>` : `<span class="ch" style="color:var(--rubric)">Idea</span>`}
+    <span class="grow"></span><span class="cd">${esc(it.date)}</span></div>`;
+  const media = (extra = "") => `<div class="frame" style="--ratio:${it.ratio}"><div class="ph" data-tone="${it.tone}"></div>${extra}</div>`;
+  let inner = "";
+  if (it.kind === "reel") inner = media(`<span class="scrim"></span><span class="playb">${G.play}</span><span class="pill">${it.duration}</span><span class="mt">${esc(it.title)}</span>`);
+  else if (it.kind === "carousel") inner = `<span class="edge e2"></span><span class="edge e1"></span>` + media(`<span class="pill">${it.slides} slides</span><span class="scrim"></span><span class="mt">${esc(it.title)}</span>`);
+  else if (it.kind === "image") inner = media(`<span class="scrim"></span><span class="mt">${esc(it.title)}</span>`);
+  else if (it.kind === "article") inner = media() + `<div class="artbody"><h3>${esc(it.title)}</h3><span class="src">${esc(it.source)}</span></div>`;
+  else if (it.kind === "note") inner = `<div class="txt note"><span class="lab">Idea</span><p>${esc(it.body)}</p></div>`;
+  else inner = `<div class="txt"><span class="lab">${it.kind === "thread" ? it.parts + " parts" : "Post"}</span><p>${esc(it.body)}</p></div>`;
+  return `<article class="tile">${inner}${cap}</article>`;
+}
+
+function screenLibrary() {
+  const cols = 4;
+  const buckets = Array.from({ length: cols }, () => ({ h: 0, items: [] }));
+  for (const it of LIBRARY) {
+    const b = buckets.reduce((a, c) => (c.h < a.h ? c : a));
+    b.items.push(it); b.h += tileWeight(it) + 0.16;
+  }
+  return `<header class="bar">
+      <div class="ttl"><h1>Library</h1><div class="sub">342 published · everything that has already left</div></div>
+      <span class="grow"></span>
+      <label class="field sm">${G.search}<input placeholder="Filter" spellcheck="false"></label>
+      <div class="seg"><button class="on">Grid</button><button>By reach</button></div>
+    </header>
+    <div class="scroll">
+      <div class="filters">${LIBRARY_FILTERS.map((f, i) => `<button class="fchip${i === 0 ? " on" : ""}">${esc(f.label)}<span class="c">${f.count}</span></button>`).join("")}</div>
+      <div class="gal">${buckets.map((b) => `<div class="galcol">${b.items.map(tile).join("")}</div>`).join("")}</div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREEN · ARTICLES  (cards → the long room)
+   ═══════════════════════════════════════════════════════════════════════════ */
+function screenArticles() {
+  if (state.article) return longRoom(ARTICLES.find((a) => a.id === state.article));
+  const counts = { draft: 0, scheduled: 0, published: 0 };
+  ARTICLES.forEach((a) => counts[a.status]++);
+  return `<header class="bar">
+      <div class="ttl"><h1>Articles</h1><div class="sub">${counts.draft} drafts · ${counts.scheduled} scheduled · ${counts.published} published</div></div>
+      <span class="grow"></span>
+      <label class="field sm">${G.search}<input placeholder="Filter" spellcheck="false"></label>
+      <button class="btn pri">${G.plus} New article</button>
+    </header>
+    <div class="scroll">
+      <div class="filters">
+        <button class="fchip on">All<span class="c">${ARTICLES.length}</span></button>
+        <button class="fchip">Drafts<span class="c">${counts.draft}</span></button>
+        <button class="fchip">Scheduled<span class="c">${counts.scheduled}</span></button>
+        <button class="fchip">Published<span class="c">${counts.published}</span></button>
+      </div>
+      <div class="artgrid">
+        ${ARTICLES.map((l) => `<article class="artcard" data-art="${l.id}">
+          <div class="atop">
+            <span class="tag ${l.status}">${l.status === "published" ? G.lock : ""} ${esc(l.status)}</span>
+            <span class="grow"></span>
+            <span class="meta">${l.words.toLocaleString()} words · ${esc(l.read)}</span>
+          </div>
+          <h2>${esc(l.title)}</h2>
+          <p>${esc(l.deck)}</p>
+          <div class="afoot">
+            ${l.dest.map((d) => `<i class="pgl tint" style="--ch:${acct(d).tint}">${glyph(acct(d).platform)}</i>`).join("") || `<span class="meta">no destination</span>`}
+            <span class="grow"></span>
+            ${l.status === "published" ? `<span class="meta">${num(l.views)} views · ${l.ratio}% read</span>`
+              : l.status === "scheduled" ? `<span class="meta" style="color:var(--rubric)">${esc(l.when)}</span>`
+              : `<span class="prog" style="--p:${l.pct}"><i></i></span><span class="meta">${Math.round(l.pct * 100)}%</span>`}
+          </div>
+        </article>`).join("")}
+        <button class="artcard" style="align-items:center;justify-content:center;color:var(--ink-4);box-shadow:inset 0 0 0 1px var(--rule-2);background:none">
+          ${G.plus}<span class="meta">Start a new piece</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+function longRoom(l) {
+  const locked = l.status === "published";
+  return `<header class="bar">
+      <button class="icobtn bare" data-back="1">${G.left}</button>
+      <span class="tag ${l.status}">${locked ? G.lock : ""} ${esc(l.status)}</span>
+      <span class="meta">${locked ? "Published " + esc(l.updated) : "Saved " + esc(l.updated)}</span>
+      <span class="grow"></span>
+      <span class="meta">${l.words.toLocaleString()} words · ${esc(l.read)}</span>
+      <div class="seg"><button class="on">${locked ? "Read" : "Write"}</button><button>Outline</button><button>Preview</button></div>
+      ${locked ? `<button class="btn">Duplicate to edit</button>` : `<button class="btn pri">${l.status === "scheduled" ? "Reschedule" : "Schedule"}</button>`}
+    </header>
+    <div class="longroom">
+      <div class="lfbody">
+        <div class="measure">
+          ${locked ? `<div class="readonly">${G.lock} Published on ${esc(l.updated)} — this piece is read-only. Duplicate it to make changes.</div>` : ""}
+          <h1 class="lftitle">${esc(l.title)}</h1>
+          <p class="lfdeck">${esc(l.deck)}</p>
+          ${l.sections.map((s) => `<h2>${esc(s.h)}</h2>${s.p.map((p) => `<p class="${locked ? "locked" : ""}">${esc(p)}</p>`).join("")}`).join("")}
+          ${locked ? "" : `<p>${esc("A date without a time of day cannot schedule anything")}<i class="caret"></i></p>`}
+        </div>
+      </div>
+      <aside class="rail">
+        <header class="bar" style="padding:0 15px"><b class="sans" style="font-size:var(--f-1);font-weight:700">Outline</b>
+          <span class="grow"></span><span class="meta">${Math.round(l.pct * 100)}%</span></header>
+        <div class="railbody">
+          ${l.outline.map((o, i) => `<button class="orow${o.done ? " done" : ""}${i === l.outline.findIndex((x) => !x.done) ? " on" : ""}">
+            <i class="obox">${o.done ? G.check : ""}</i><span>${esc(o.h)}</span></button>`).join("")}
+          ${locked ? "" : `<button class="addacct">${G.plus}<span>Add a section</span></button>`}
+          <div class="sechead" style="margin-top:12px">Destinations<i class="ln"></i></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${l.dest.map((d) => { const a = acct(d); return `<span class="chip on"><i class="pgl tint" style="--ch:${a.tint}">${glyph(a.platform)}</i>${esc(a.handle)}</span>`; }).join("")
+              || `<span class="meta">Not aimed anywhere yet.</span>`}
+            ${locked ? "" : `<button class="chip">${G.plus}</button>`}
+          </div>
+          ${locked ? `<div class="sechead" style="margin-top:14px">How it did<i class="ln"></i></div>
+            <dl class="kv">
+              <dt>Views</dt><dd class="mono">${num(l.views)}</dd>
+              <dt>Reads</dt><dd class="mono">${num(l.reads)}</dd>
+              <dt>Read ratio</dt><dd class="mono">${l.ratio}%</dd>
+              <dt>Claps</dt><dd class="mono">${l.claps}</dd>
+            </dl>` : `<div class="sechead" style="margin-top:14px">Status<i class="ln"></i></div>
+            <dl class="kv">
+              <dt>State</dt><dd>${esc(l.status)}</dd>
+              <dt>Updated</dt><dd>${esc(l.updated)}</dd>
+              ${l.when ? `<dt>Goes out</dt><dd style="color:var(--rubric)">${esc(l.when)}</dd>` : ""}
+            </dl>`}
+          <div class="sechead" style="margin-top:14px">Other pieces<i class="ln"></i></div>
+          ${ARTICLES.filter((x) => x.id !== l.id).map((x) => `<button class="usedrow" data-art="${x.id}">
+            <span class="ub">${esc(x.title)}</span><span class="tag ${x.status}" style="font-size:9px">${esc(x.status[0])}</span></button>`).join("")}
+        </div>
+      </aside>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREEN · ASSETS
+   ═══════════════════════════════════════════════════════════════════════════ */
+function screenAssets() {
+  const pick = ASSETS[1];
+  return `<header class="bar">
+      <div class="ttl"><h1>Assets</h1><div class="sub">214 files · 39 unsorted · 6.4 GB · used everywhere in the app</div></div>
+      <span class="grow"></span>
+      <label class="field sm">${G.search}<input placeholder="Filter by tag" spellcheck="false"></label>
+      <div class="seg"><button class="on">Newest</button><button>Unused</button><button>Earned</button></div>
+      <button class="icobtn acc">${G.plus}</button>
+    </header>
+    <div class="withrail">
+      <div class="scroll">
+        <div class="filters">${ASSET_FOLDERS.map((f, i) => `<button class="fchip${i === 0 ? " on" : ""}">${esc(f.label)}<span class="c">${f.count}</span></button>`).join("")}</div>
+        <div class="assetgrid">
+          ${ASSETS.map((a) => `<article class="acell"${a.id === pick.id ? ' data-pick="1"' : ""}>
+            ${a.type === "set" ? `<span class="edge e2"></span><span class="edge e1"></span>` : ""}
+            <div class="frame"><div class="ph" data-tone="${a.tone}"></div>
+              ${a.type === "video" ? `<span class="playb">${G.play}</span><span class="pill">${a.dur}</span>` : ""}
+              ${a.type === "set" ? `<span class="pill">${a.count}</span>` : ""}
+              ${a.usedIn === 0 ? `<span class="unused">unused</span>` : ""}
+            </div>
+            <div class="ameta"><span class="an">${esc(a.title)}</span><span class="grow"></span>
+              ${a.reach ? `<span class="earn">${num(a.reach)}</span>` : a.usedIn ? `<span class="usedin">×${a.usedIn}</span>` : ""}</div>
+          </article>`).join("")}
+        </div>
+      </div>
+      <aside class="rail">
+        <header class="bar" style="padding:0 15px"><b class="sans" style="font-size:var(--f-1);font-weight:700">${esc(pick.title)}</b>
+          <span class="grow"></span><button class="icobtn bare">${G.dots}</button></header>
+        <div class="railbody">
+          <div class="frame ihero" style="--ratio:${pick.ratio}"><div class="ph" data-tone="${pick.tone}"></div><span class="pill">${pick.count} images</span></div>
+          <dl class="kv">
+            <dt>Kind</dt><dd>Image set · ${pick.count}</dd>
+            <dt>Added</dt><dd>${esc(pick.date)}</dd>
+            <dt>Size</dt><dd class="mono">${esc(pick.size)}</dd>
+            <dt>Folder</dt><dd>Screens</dd>
+            <dt>Earned</dt><dd class="mono">${num(pick.reach)} reach</dd>
+          </dl>
+          <div class="sechead" style="margin-top:12px">Used in<i class="ln"></i></div>
+          <button class="usedrow"><span class="k">Carousel</span><span class="ub">Eight screens, annotated</span><span class="meta">${num(pick.reach)}</span></button>
+          <button class="usedrow"><span class="k">Draft</span><span class="ub">Launch recap, ten cards</span><span class="meta">—</span></button>
+          <div class="sechead" style="margin-top:12px">Tags<i class="ln"></i></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${pick.tags.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}<button class="chip">${G.plus}</button></div>
+          <button class="btn pri" style="justify-content:center;margin-top:14px">${G.plus} Make a post from this</button>
+        </div>
+      </aside>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCREEN · ANALYTICS — the wall, then one channel
+   ═══════════════════════════════════════════════════════════════════════════ */
+function screenAnalytics() {
+  if (state.channel) return oneChannel(acct(state.channel));
+
+  const shown = ACCOUNTS.filter((a) => passes(a, state.anFilter));
+  const R = state.anRange;
+
+  /* Totals recompute against the filter — a filtered wall with unfiltered
+     totals is a lie, and the numbers are centred because they describe the
+     grid below them, not the toolbar above. */
+  const totFollowers = shown.reduce((s, a) => s + a.followers, 0);
+  const totReach = shown.reduce((s, a) => s + lastN(SERIES[a.id].reach, R).reduce((x, y) => x + y, 0), 0);
+  const totPosts = shown.reduce((s, a) => s + Math.round(lastN(SERIES[a.id].posts, R).reduce((x, y) => x + y, 0) / 7), 0);
+  const totEng = (shown.reduce((s, a) => s + a.eng7, 0) / (shown.length || 1)).toFixed(1);
+  const grew = shown.reduce((s, a) => s + Math.round(a.followers * a.delta / 100 * (R / 7)), 0);
+
+  const totals = [
+    { k: "Reach", v: num(totReach), d: 18.2 },
+    { k: "Followers", v: num(totFollowers), d: 2.7 },
+    { k: "New followers", v: "+" + grew.toLocaleString(), d: 24.1 },
+    { k: "Engagement", v: totEng + "%", d: 3.4 },
+    { k: "Posts out", v: String(totPosts), d: -4.5 },
+  ];
+
+  /* One series per shown channel, in that channel's own tint. */
+  const series = shown.map((a) => ({
+    label: a.handle, color: a.tint,
+    pts: state.anView === "cumulative" ? cumulative(lastN(SERIES[a.id].reach, R)) : lastN(SERIES[a.id].reach, R),
+  })).sort((x, y) => Math.max(...y.pts) - Math.max(...x.pts));
+
+  const stacked = lastN(SERIES[ACCOUNTS[0].id].reach, R).map((_, i) =>
+    shown.reduce((s, a) => s + lastN(SERIES[a.id].reach, R)[i], 0));
+  const totalSeries = [{ label: "All channels", color: "#23252b", pts: state.anView === "cumulative" ? cumulative(stacked) : stacked }];
+  const xlabels = R === 7 ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    : R === 30 ? ["30d ago", "20d", "10d", "today"] : ["90d ago", "60d", "30d", "today"];
+
+  const top = POSTS.filter((p) => passes(acct(p.acct), state.anFilter)).sort((a, b) => b.reach - a.reach).slice(0, 6);
+
+  return `<header class="bar">
+      <div class="ttl"><h1>Analytics</h1><div class="sub">${shown.length} channel${shown.length > 1 ? "s" : ""} · last ${R} days</div></div>
+      <span class="grow"></span>
+      <div class="seg">
+        <button class="${state.anView === "overtime" ? "on" : ""}" data-anv="overtime">Over time</button>
+        <button class="${state.anView === "cumulative" ? "on" : ""}" data-anv="cumulative">Cumulative</button>
+      </div>
+      <div class="seg">
+        ${[7, 30, 90].map((r) => `<button class="${R === r ? "on" : ""}" data-anr="${r}">${r}d</button>`).join("")}
+      </div>
+      <button class="icobtn bare">${G.dots}</button>
+    </header>
+    <div class="scroll">
+      ${filterRail(state.anFilter, "data-af")}
+
+      <div class="anhead">
+        <div class="totals">
+          ${totals.map((t) => `<div class="tot">
+            <span class="stat-k">${esc(t.k)}</span>
+            <b class="stat-v">${esc(t.v)}</b>
+            ${delta(t.d)}
+          </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="anband">
+        <section class="panel wide">
+          <div class="sechead">${state.anView === "cumulative" ? "Cumulative reach" : "Reach per day"}
+            <span class="meta">${shown.length === 1 ? esc(shown[0].handle) : "all shown channels, summed"}</span><i class="ln"></i>
+            <span class="meta">${num(state.anView === "cumulative" ? totalSeries[0].pts.at(-1) : Math.max(...stacked))} peak</span></div>
+          <div class="chartwrap">${areaChart(totalSeries, { w: 940, h: 168, labels: xlabels })}</div>
+        </section>
+
+        <section class="panel wide">
+          <div class="sechead">Per channel <span class="meta">${state.anView === "cumulative" ? "cumulative" : "daily"} reach, one line per channel</span><i class="ln"></i></div>
+          <div class="chartwrap">${areaChart(series, { w: 940, h: 176, fill: false, labels: xlabels })}</div>
+          <div class="chlegend">${series.map((s) => `<span class="lgi"><i style="--ch:${s.color}"></i>${esc(s.label)}</span>`).join("")}</div>
+        </section>
+      </div>
+
+      <div class="sechead" style="padding:2px 20px 10px">Channels<i class="ln"></i><span class="meta">click one for its full record</span></div>
+      <div class="wall">
+        ${shown.map((a) => `<article class="chcard" style="--ch:${a.tint}" data-ch="${a.id}">
+          <header class="chhead">
+            ${av(a)}
+            <span class="chn"><b>${esc(a.handle)}</b><em>${PLAB[a.platform]}${a.project === null ? " · everywhere" : ""}</em></span>
+            <i class="pgl tint" style="--ch:${a.tint}">${glyph(a.platform)}</i>
+          </header>
+          <div class="chnums">
+            <span class="cn"><b>${num(a.followers)}</b><em>followers</em>${delta(a.delta)}</span>
+            <span class="cn"><b>${num(a.reach7)}</b><em>reach 7d</em></span>
+          </div>
+          ${sparkline(lastN(SERIES[a.id].reach, R), a.tint)}
+          <footer class="chfoot">
+            <span class="cad"><i class="cadbar" style="--p:${a.cadence.t ? Math.min(1, a.cadence.a / a.cadence.t) : 0}"></i><em>${a.cadence.a}/${a.cadence.t} wk</em></span>
+            <span class="grow"></span>
+            ${a.health === "ok" ? `<span class="chq">${a.queued ? `<b>${a.queued}</b> queued` : "nothing queued"}</span>` : healthChip(a)}
+          </footer>
+        </article>`).join("")}
+        <button class="chcard add">${G.plus}<span class="meta">Connect a channel</span></button>
+      </div>
+
+      <div class="anband">
+        <section class="panel">
+          <div class="sechead">Best time to post <span class="meta">reach by hour</span><i class="ln"></i></div>
+          ${heatGrid()}
+          <p class="anote">Thursday 09:00 is the peak. Six of the ten best pieces left within an hour of it.</p>
+        </section>
+        <section class="panel">
+          <div class="sechead">Best performing <span class="meta">by reach</span><i class="ln"></i></div>
+          ${top.map((p) => postRow(p, top[0].reach)).join("")}
+        </section>
+      </div>
+    </div>`;
+}
+
+function postRow(p, max) {
+  const a = acct(p.acct);
+  return `<button class="postrow rankbar" style="--ch:${a.tint};--p:${(p.reach / max).toFixed(2)}">
+    <span class="thumb"><span class="ph" data-tone="${p.tone}" style="position:absolute;inset:0"></span></span>
+    <span class="pb">${esc(p.body)}<br><span class="meta">${esc(a.handle)} · ${esc(KIND[p.kind])} · ${esc(p.date)}</span></span>
+    <span class="n">${num(p.reach)}</span><span class="n">${num(p.likes)}</span><span class="n">${p.comments}</span>
+    <span class="n">${p.shares}</span><span class="n">${num(p.saves)}</span>
+    <span class="n" style="color:var(--good)">${p.eng}%</span>
+  </button>`;
+}
+
+function heatGrid() {
+  const max = Math.max(...ANALYTICS.heat.flat());
+  const rows = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  return `<div class="heat">
+    <div class="heatrow head"><span></span>${ANALYTICS.hours.map((h) => `<span>${h}</span>`).join("")}</div>
+    ${ANALYTICS.heat.map((r, i) => `<div class="heatrow">
+      <span class="hd">${rows[i].slice(0, 1)}</span>
+      ${r.map((v) => `<i class="heatcell" style="--v:${(v / max).toFixed(2)}"${v === max ? ' data-peak="1"' : ""}></i>`).join("")}
+    </div>`).join("")}
+  </div>`;
+}
+
+/* ── one channel ────────────────────────────────────────────────────────── */
+function oneChannel(a) {
+  const R = state.anRange;
+  const s = SERIES[a.id];
+  const posts = POSTS.filter((p) => p.acct === a.id).sort((x, y) => y.reach - x.reach);
+  const fallback = POSTS.slice().sort((x, y) => y.reach - x.reach).slice(0, 4);
+  const list = posts.length ? posts : fallback;
+  const reachPts = lastN(s.reach, R), follPts = lastN(s.followers, R);
+  const xlabels = R === 7 ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    : R === 30 ? ["30d ago", "20d", "10d", "today"] : ["90d ago", "60d", "30d", "today"];
+  const gained = follPts.at(-1) - follPts[0];
+  const totalReach = reachPts.reduce((x, y) => x + y, 0);
+
+  return `<header class="bar">
+      <button class="icobtn bare" data-back="1">${G.left}</button>
+      <div class="ttl"><h1 style="font-size:var(--f1)">${esc(a.handle)}</h1></div>
+      <span class="grow"></span>
+      <div class="seg">
+        <button class="${state.anView === "overtime" ? "on" : ""}" data-anv="overtime">Over time</button>
+        <button class="${state.anView === "cumulative" ? "on" : ""}" data-anv="cumulative">Cumulative</button>
+      </div>
+      <div class="seg">${[7, 30, 90].map((r) => `<button class="${R === r ? "on" : ""}" data-anr="${r}">${r}d</button>`).join("")}</div>
+      <button class="btn">Open channel rules</button>
+      <button class="btn pri">${G.plus} New for this channel</button>
+    </header>
+    <div class="scroll">
+      <header class="chhero" style="--ch:${a.tint}">
+        ${av(a, "lg")}
+        <div class="ttl"><h1>${esc(a.handle)}</h1>
+          <div class="sub">${PLAB[a.platform]} · ${a.project === null ? "every project" : esc((PROJECTS.find((p) => p.id === a.project) || {}).name)} · last out ${esc(a.last)}</div></div>
+        <span class="grow"></span>
+        ${healthChip(a)}
+        <div class="chstats">
+          <span class="cn"><b>${num(a.followers)}</b><em>followers</em>${delta(a.delta)}</span>
+          <span class="cn"><b>${num(totalReach)}</b><em>reach ${R}d</em></span>
+          <span class="cn"><b>${a.eng7}%</b><em>engagement</em></span>
+          <span class="cn"><b>${a.best}</b><em>best hour</em></span>
+          <span class="cn"><b>${a.cadence.a}/${a.cadence.t}</b><em>cadence wk</em></span>
+        </div>
+      </header>
+
+      <div class="anband" style="padding-top:16px">
+        <section class="panel">
+          <div class="sechead">Subscribers <span class="meta">${gained >= 0 ? "+" : ""}${gained.toLocaleString()} over ${R} days</span><i class="ln"></i></div>
+          ${areaChart([{ label: "Followers", color: a.tint, pts: follPts }], { w: 460, h: 150, labels: xlabels })}
+        </section>
+        <section class="panel">
+          <div class="sechead">${state.anView === "cumulative" ? "Cumulative reach" : "Reach per day"}
+            <span class="meta">${num(totalReach)} total</span><i class="ln"></i></div>
+          ${areaChart([{ label: "Reach", color: a.tint, pts: state.anView === "cumulative" ? cumulative(reachPts) : reachPts }], { w: 460, h: 150, labels: xlabels })}
+        </section>
+        <section class="panel">
+          <div class="sechead">Posts out <span class="meta">per week</span><i class="ln"></i></div>
+          ${barChart(lastN(s.posts, Math.min(R, 30)), a.tint, { w: 460, h: 92 })}
+          <dl class="kv" style="margin-top:14px">
+            <dt>Target</dt><dd class="mono">${a.cadence.t} / week</dd>
+            <dt>Actual</dt><dd class="mono">${a.cadence.a} / week</dd>
+            <dt>Queued</dt><dd class="mono">${a.queued}</dd>
+            <dt>Best hour</dt><dd class="mono">${esc(a.best)}</dd>
+          </dl>
+        </section>
+      </div>
+
+      <div class="anband">
+        <section class="panel wide">
+          <div class="sechead">Best performing here <span class="meta">every metric this platform reports</span><i class="ln"></i>
+            <div class="seg" style="margin-left:auto">
+              <button class="${state.chTab === "overview" ? "on" : ""}" data-cht="overview">Top</button>
+              <button class="${state.chTab === "posts" ? "on" : ""}" data-cht="posts">All posts</button>
+            </div>
+          </div>
+          <div class="postrow th">
+            <span></span><span>Piece</span><span class="n">Reach</span><span class="n">Likes</span>
+            <span class="n">Comments</span><span class="n">Shares</span><span class="n">Saves</span><span class="n">Eng.</span>
+          </div>
+          ${(state.chTab === "posts" ? list : list.slice(0, 5)).map((p) => postRow(p, list[0].reach)).join("")}
+          ${posts.length ? "" : `<p class="anote">This channel has nothing published in range — showing the account's best across the project so the page is never empty.</p>`}
+        </section>
+      </div>
+
+      <div class="anband">
+        <section class="panel">
+          <div class="sechead">Best time for this channel<i class="ln"></i></div>
+          ${heatGrid()}
+        </section>
+        <section class="panel">
+          <div class="sechead">Queued here <span class="meta">${a.queued} pieces</span><i class="ln"></i></div>
+          ${PLAN.filter((c) => c.acct === a.id && c.col !== "published").map((c) => `
+            <button class="usedrow" style="--ch:${a.tint}">
+              <span class="k">${esc(KIND[c.kind])}</span>
+              <span class="ub">${esc(c.body)}</span>
+              <span class="meta" style="color:var(--rubric)">${esc(c.when || c.age || "")}</span></button>`).join("")
+            || `<p class="anote">Nothing queued for this channel. That is the number that matters on this page.</p>`}
+          <div class="sechead" style="margin-top:14px">Channel rules<i class="ln"></i></div>
+          <button class="usedrow"><i class="obox" style="background:var(--ink);color:var(--paper)">${G.check}</i><span class="ub">Never two reels in a row</span></button>
+          <button class="usedrow"><i class="obox" style="background:var(--ink);color:var(--paper)">${G.check}</i><span class="ub">Alt text required</span></button>
+          <button class="usedrow"><i class="obox"></i><span class="ub">Mirror to @kartik.builds</span></button>
+        </section>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DAY DRAWER
+   ═══════════════════════════════════════════════════════════════════════════ */
+function renderDrawer() {
+  const d = state.day;
+  document.body.dataset.drawer = d ? "on" : "off";
+  if (!d) return;
+  const c = MONTH.cells[d] || {};
+  const sched = c.sched || [];
+  $("#drawer").innerHTML = `
+    <header class="bar" style="padding:0 16px">
+      <div class="ttl"><h1 style="font-size:var(--f1)">${d} July</h1>
+        <div class="sub">${sched.length} scheduled${c.reach ? ` · ${num(c.reach)} reach earned` : ""}</div></div>
+      <span class="grow"></span>
+      <button class="icobtn bare" data-close="1" aria-label="Close">${G.close}</button>
+    </header>
+    <div class="drawerbody">
+      ${sched.length ? sched.map((s) => { const a = acct(s.acct); return `
+        <div class="drow" style="--ch:${a.tint}">
+          <span class="dtime">${s.t}</span>
+          <span style="flex:1;min-width:0">
+            <span style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              ${av(a, "sm")}<span class="sans" style="font-size:var(--f-2);font-weight:700">${esc(a.handle)}</span>
+              <span class="k">${esc(KIND[s.kind])}</span></span>
+            <span style="font-size:var(--f0);line-height:1.4">${esc(s.body)}</span>
+            ${s.failed ? `<span class="hchip bad" style="margin-top:6px">${G.warn} Failed — token expired</span>` : ""}
+          </span>
+        </div>`; }).join("")
+        : `<p class="empty">Nothing scheduled. Drag something here from the Ready column.</p>`}
+      <button class="kadd" style="margin-top:6px">${G.plus} Schedule something on this day</button>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RENDER + EVENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+function render() {
+  renderSide();
+  const screens = { plan: screenPlan, library: screenLibrary, articles: screenArticles, assets: screenAssets, analytics: screenAnalytics };
+  $("#main").innerHTML = (screens[state.route] || screenPlan)();
+  renderDrawer();
+}
+
+document.addEventListener("click", (e) => {
+  const hit = (sel) => e.target.closest(sel);
+  let el;
+  if ((el = hit("[data-go]")))    return go({ route: el.dataset.go, channel: null, article: null, day: null });
+  if ((el = hit("[data-plan]")))  return go({ planView: el.dataset.plan });
+  if ((el = hit("[data-cal]")))   return go({ calView: el.dataset.cal });
+  if ((el = hit("[data-pf]")))    return go({ planFilter: el.dataset.pf });
+  if ((el = hit("[data-af]")))    return go({ anFilter: el.dataset.af });
+  if ((el = hit("[data-anv]")))   return go({ anView: el.dataset.anv });
+  if ((el = hit("[data-anr]")))   return go({ anRange: +el.dataset.anr });
+  if ((el = hit("[data-cht]")))   return go({ chTab: el.dataset.cht });
+  if ((el = hit("[data-art]")))   return go({ route: "articles", article: el.dataset.art });
+  if ((el = hit("[data-ch]")))    return go({ route: "analytics", channel: el.dataset.ch, chTab: "overview" });
+  if ((el = hit("[data-day]")))   return go({ day: +el.dataset.day });
+  if (hit("[data-close]") || hit("#scrim")) return go({ day: null });
+  if (hit("[data-back]"))         return go({ channel: null, article: null });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") return go({ day: null, channel: null, article: null });
+  if (e.target.tagName === "INPUT") return;
+  const map = { 1: "plan", 2: "library", 3: "articles", 4: "assets", 5: "analytics" };
+  if (map[e.key]) go({ route: map[e.key], channel: null, article: null, day: null });
+});
+
+render();
+</script>
+</body>
+</html>

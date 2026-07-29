@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Distribution OS — concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   WARM WORKSTATION — native macOS bones, warm paper skin
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --paper:#F2ECDF;
+  --paper-raised:#FCFAF4;
+  --paper-sunk:#EAE3D3;
+  --chrome:rgba(238,231,217,.74);
+
+  --ink:#221D15;
+  --ink-2:#6C6455;
+  --ink-3:#9C9382;
+  --ink-4:#BCB3A1;
+
+  --rule:rgba(34,29,21,.09);
+  --rule-2:rgba(34,29,21,.16);
+
+  --amber:#B4761A;
+  --amber-lit:#F2C75C;
+  --amber-wash:rgba(180,118,26,.10);
+
+  --x:#221D15;
+  --ig:#B85374;
+  --th:#5A4A38;
+  --li:#3A6C86;
+
+  --r-s:6px; --r-m:9px; --r-l:14px; --r-xl:20px;
+
+  --sans:"Instrument Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+  --serif:"Fraunces",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",monospace;
+
+  --shadow-lift:0 1px 2px rgba(60,45,20,.06), 0 6px 18px -6px rgba(60,45,20,.14);
+  --shadow-pop:0 2px 6px rgba(60,45,20,.08), 0 20px 44px -14px rgba(60,45,20,.26);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans);
+  font-size:13px; line-height:1.45;
+  color:var(--ink);
+  background:#DED6C4;
+  -webkit-font-smoothing:antialiased;
+  display:grid; place-items:center;
+  padding:26px;
+  overflow:hidden;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit;background:none;border:0;outline:0}
+::selection{background:var(--amber-lit);color:var(--ink)}
+
+/* ── window ───────────────────────────────────────────────── */
+.win{
+  width:min(1560px,100%); height:min(940px,100%);
+  border-radius:var(--r-xl);
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:246px 384px minmax(0,1fr);
+  background:var(--paper);
+  box-shadow:0 0 0 .5px rgba(34,29,21,.22), 0 40px 90px -30px rgba(50,38,18,.55), 0 8px 24px rgba(50,38,18,.14);
+  position:relative;
+  isolation:isolate;
+  animation:rise .7s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px) scale(.992)}to{opacity:1;transform:none}}
+
+/* warm light wash + paper grain over everything */
+.win::before{
+  content:"";position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 82% 108%, rgba(242,199,92,.20), transparent 62%),
+    radial-gradient(80% 60% at 4% -6%, rgba(255,252,244,.65), transparent 60%);
+}
+.win::after{
+  content:"";position:absolute;inset:0;z-index:6;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+
+/* ── sidebar ──────────────────────────────────────────────── */
+.sidebar{
+  background:var(--chrome);
+  backdrop-filter:blur(24px) saturate(1.4);
+  border-right:.5px solid var(--rule-2);
+  display:flex; flex-direction:column;
+  min-height:0; position:relative; z-index:2;
+}
+.lights{display:flex;gap:8px;padding:14px 0 0 14px}
+.lights i{width:12px;height:12px;border-radius:50%;display:block;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14)}
+.lights i:nth-child(1){background:#EC6A5F}
+.lights i:nth-child(2){background:#F4BF50}
+.lights i:nth-child(3){background:#61C555}
+
+.brand{display:flex;align-items:center;gap:9px;padding:16px 14px 12px}
+.brand-mark{
+  width:26px;height:26px;border-radius:8px;flex:none;
+  background:linear-gradient(150deg,var(--amber-lit),var(--amber));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 2px 5px rgba(150,95,10,.3);
+  display:grid;place-items:center;
+}
+.brand-mark svg{width:14px;height:14px;stroke:#3B2A08;stroke-width:2.2;fill:none;stroke-linecap:round}
+.brand-name{font-family:var(--serif);font-size:15px;font-weight:600;letter-spacing:-.01em;font-variation-settings:"SOFT" 40,"WONK" 1}
+
+.search{
+  margin:0 12px 14px;
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,253,247,.7);
+  border:.5px solid var(--rule-2);
+  border-radius:var(--r-s);
+  padding:5px 8px;
+  box-shadow:inset 0 1px 2px rgba(34,29,21,.04);
+}
+.search svg{width:12px;height:12px;stroke:var(--ink-3);stroke-width:2;fill:none}
+.search input{width:100%;font-size:12.5px}
+.search input::placeholder{color:var(--ink-3)}
+.search kbd{font-family:var(--mono);font-size:10px;color:var(--ink-4)}
+
+.scroll{flex:1;min-height:0;overflow:auto;padding:0 8px 8px}
+.scroll::-webkit-scrollbar{width:0}
+
+.sec{padding:12px 8px 5px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-4);font-family:var(--sans)}
+
+.row{
+  display:flex;align-items:center;gap:9px;
+  width:100%;padding:6px 8px;border-radius:var(--r-s);
+  color:var(--ink-2);text-align:left;
+  transition:background .12s ease,color .12s ease;
+}
+.row:hover{background:rgba(34,29,21,.045);color:var(--ink)}
+.row.on{background:var(--ink);color:var(--paper-raised);font-weight:600;box-shadow:0 1px 3px rgba(34,29,21,.24)}
+.row.on .count{color:rgba(252,250,244,.62)}
+.row.on .gl{color:var(--amber-lit)}
+.row .gl{width:15px;height:15px;flex:none;color:var(--ink-3)}
+.row .gl svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;display:block}
+.row .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+.count{font-family:var(--mono);font-size:10.5px;color:var(--ink-4);font-variant-numeric:tabular-nums}
+
+/* account rows */
+.plat{display:flex;align-items:center;gap:6px;padding:11px 8px 3px;color:var(--ink-3)}
+.plat svg{width:11px;height:11px}
+.plat span{font-size:10.5px;font-weight:600;letter-spacing:.04em}
+.acct{padding-left:8px}
+.av{
+  width:19px;height:19px;border-radius:6px;flex:none;position:relative;
+  display:grid;place-items:center;
+  font-size:9.5px;font-weight:700;color:#fff;letter-spacing:-.02em;
+  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.16);
+}
+.av[data-p="x"]{background:linear-gradient(145deg,#3B342A,#1A160F)}
+.av[data-p="ig"]{background:linear-gradient(145deg,#D2708F,#A5416A)}
+.av[data-p="th"]{background:linear-gradient(145deg,#786549,#4A3C2A)}
+.av[data-p="li"]{background:linear-gradient(145deg,#4E86A2,#2C5C75)}
+.av .dot{
+  position:absolute;right:-2px;bottom:-2px;width:7px;height:7px;border-radius:50%;
+  background:#5FA86A;box-shadow:0 0 0 1.6px var(--chrome);
+}
+.av .dot.off{background:var(--ink-4)}
+
+.addacct{color:var(--ink-3);font-size:12px}
+.addacct:hover{color:var(--amber)}
+.addacct .gl{color:var(--ink-4)}
+
+.sidefoot{
+  border-top:.5px solid var(--rule);
+  padding:11px 14px 13px;
+  display:flex;align-items:center;gap:9px;
+}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--amber);flex:none;box-shadow:0 0 0 0 var(--amber-lit);animation:pulse 2.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,199,92,.9)}70%{box-shadow:0 0 0 7px rgba(242,199,92,0)}100%{box-shadow:0 0 0 0 rgba(242,199,92,0)}}
+.sidefoot .t{font-size:11px;color:var(--ink-2);line-height:1.3}
+.sidefoot .t b{display:block;color:var(--ink);font-family:var(--mono);font-size:11.5px;font-weight:500}
+
+/* ── list column ──────────────────────────────────────────── */
+.list{
+  border-right:.5px solid var(--rule-2);
+  display:flex;flex-direction:column;min-height:0;
+  background:linear-gradient(180deg,rgba(252,250,244,.5),rgba(252,250,244,0) 220px);
+  position:relative;z-index:2;
+}
+.bar{
+  height:52px;flex:none;display:flex;align-items:center;gap:10px;
+  padding:0 12px 0 16px;border-bottom:.5px solid var(--rule);
+}
+.bar h1{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:-.015em;font-variation-settings:"SOFT" 40,"WONK" 1}
+.bar .sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:2px;white-space:nowrap}
+.bar>div:first-child{flex:none}
+.grow{flex:1}
+
+.seg{display:flex;background:rgba(34,29,21,.055);border-radius:7px;padding:2px}
+.seg button{padding:3.5px 9px;border-radius:5px;font-size:11.5px;color:var(--ink-2);transition:.14s}
+.seg button.on{background:var(--paper-raised);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(34,29,21,.14)}
+
+.icobtn{width:27px;height:27px;border-radius:7px;display:grid;place-items:center;color:var(--ink-2);transition:.14s}
+.icobtn:hover{background:rgba(34,29,21,.06);color:var(--ink)}
+.icobtn svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.icobtn.acc{background:var(--amber-lit);color:#3B2A08;box-shadow:0 1px 2px rgba(150,95,10,.28),inset 0 1px 0 rgba(255,255,255,.5)}
+.icobtn.acc:hover{background:#F5D072;color:#3B2A08}
+
+.feed{flex:1;min-height:0;overflow:auto;padding-bottom:20px}
+.feed::-webkit-scrollbar{width:9px}
+.feed::-webkit-scrollbar-thumb{background:rgba(34,29,21,.16);border-radius:5px;border:3px solid transparent;background-clip:content-box}
+
+.day{
+  position:sticky;top:0;z-index:3;
+  display:flex;align-items:baseline;gap:9px;
+  padding:14px 16px 7px;
+  background:linear-gradient(180deg,var(--paper) 62%,rgba(242,236,223,0));
+  backdrop-filter:blur(6px);
+}
+.day h2{font-family:var(--serif);font-size:13.5px;font-weight:600;letter-spacing:-.005em}
+.day .dt{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.day .ln{flex:1;height:.5px;background:var(--rule-2)}
+
+.card{
+  display:grid;grid-template-columns:46px minmax(0,1fr) auto;
+  gap:11px;align-items:start;
+  margin:2px 10px;padding:9px 10px;
+  border-radius:var(--r-m);
+  cursor:default;
+  transition:background .13s ease, transform .13s ease;
+  position:relative;
+}
+.card:hover{background:rgba(255,253,247,.82)}
+.card.sel{background:var(--paper-raised);box-shadow:var(--shadow-lift),0 0 0 .5px var(--rule-2)}
+.card.sel::before{
+  content:"";position:absolute;left:-10px;top:11px;bottom:11px;width:3px;
+  border-radius:0 3px 3px 0;background:var(--amber);
+}
+.time{
+  font-family:var(--mono);font-size:11px;color:var(--ink-2);
+  text-align:right;padding-top:2px;font-variant-numeric:tabular-nums;line-height:1.3;
+}
+.time b{display:block;font-weight:500;color:var(--ink)}
+.time i{font-style:normal;font-size:9px;color:var(--ink-4);letter-spacing:.06em}
+.card.sel .time b{color:var(--amber)}
+
+.who{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.who .h{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.who .k{
+  font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-3);background:rgba(34,29,21,.06);
+  padding:1px 5px;border-radius:4px;
+}
+.body{font-size:12.5px;line-height:1.5;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card.draft .body{color:var(--ink-2)}
+.strip{display:flex;gap:4px;margin-top:7px}
+.strip i{
+  width:26px;height:26px;border-radius:5px;display:block;
+  box-shadow:inset 0 0 0 .5px rgba(34,29,21,.14);
+}
+.thumbA{background:linear-gradient(140deg,#E8C889,#C98F4E)}
+.thumbB{background:linear-gradient(140deg,#A9BFA4,#6E8C74)}
+.thumbC{background:linear-gradient(140deg,#D9A9A0,#B4736C)}
+.thumbD{background:linear-gradient(140deg,#B6AECB,#7E769B)}
+.strip .more{
+  width:26px;height:26px;border-radius:5px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:9px;color:var(--ink-3);
+  background:rgba(34,29,21,.05);box-shadow:none;
+}
+.tail{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-top:2px}
+.pgl{width:14px;height:14px;opacity:.5}
+.st{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--ink-3);text-transform:uppercase}
+.st.q{color:var(--amber)}
+
+/* ── detail ───────────────────────────────────────────────── */
+.detail{display:grid;grid-template-columns:minmax(0,1fr) 312px;min-height:0;position:relative;z-index:2}
+.compose{display:flex;flex-direction:column;min-height:0}
+
+.tgt{padding:14px 22px 12px;border-bottom:.5px solid var(--rule);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tgt .lb{font-size:11px;color:var(--ink-3);margin-right:2px}
+.chip{
+  display:flex;align-items:center;gap:6px;
+  padding:3.5px 9px 3.5px 4px;border-radius:99px;
+  background:var(--paper-raised);
+  box-shadow:0 0 0 .5px var(--rule-2),0 1px 2px rgba(34,29,21,.05);
+  font-size:11.5px;font-weight:600;color:var(--ink-2);
+  transition:.14s;
+}
+.chip:hover{box-shadow:0 0 0 .5px var(--ink-3),0 1px 3px rgba(34,29,21,.1)}
+.chip.on{color:var(--ink);box-shadow:0 0 0 1.5px var(--amber),0 1px 3px rgba(180,118,26,.2)}
+.chip .av{width:17px;height:17px;border-radius:5px;font-size:8.5px}
+.chip.add{padding:4px 10px;color:var(--ink-3);background:none;box-shadow:0 0 0 .5px var(--rule-2);font-weight:500}
+.chip.add:hover{color:var(--amber);box-shadow:0 0 0 .5px var(--amber)}
+
+.sheet{flex:1;min-height:0;overflow:auto;padding:24px 22px 10px}
+.sheet::-webkit-scrollbar{width:9px}
+.sheet::-webkit-scrollbar-thumb{background:rgba(34,29,21,.14);border-radius:5px;border:3px solid transparent;background-clip:content-box}
+
+.ttl{
+  font-family:var(--serif);font-size:23px;font-weight:600;letter-spacing:-.02em;
+  font-variation-settings:"SOFT" 40,"WONK" 1;width:100%;margin-bottom:14px;
+}
+.ttl::placeholder{color:var(--ink-4)}
+.write{
+  width:100%;font-size:16px;line-height:1.62;resize:none;min-height:190px;
+  letter-spacing:-.004em;
+}
+.write::placeholder{color:var(--ink-4)}
+
+.media{display:flex;gap:9px;margin-top:20px;flex-wrap:wrap}
+.mtile{
+  width:88px;height:88px;border-radius:var(--r-m);position:relative;overflow:hidden;
+  box-shadow:0 0 0 .5px rgba(34,29,21,.14),var(--shadow-lift);
+  transition:transform .16s cubic-bezier(.2,.8,.3,1);
+}
+.mtile:hover{transform:translateY(-2px)}
+.mtile span{
+  position:absolute;left:5px;top:5px;
+  font-family:var(--mono);font-size:8.5px;color:rgba(255,255,255,.92);
+  background:rgba(30,22,10,.42);backdrop-filter:blur(4px);
+  padding:1px 4px;border-radius:3px;
+}
+.mtile.add{
+  background:none;box-shadow:none;
+  border:1.2px dashed var(--rule-2);
+  display:grid;place-items:center;color:var(--ink-4);
+}
+.mtile.add:hover{border-color:var(--amber);color:var(--amber)}
+.mtile.add svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round}
+
+.dock{
+  flex:none;border-top:.5px solid var(--rule);
+  padding:12px 22px;display:flex;align-items:center;gap:11px;
+  background:linear-gradient(180deg,rgba(252,250,244,0),rgba(252,250,244,.7));
+}
+.when{
+  display:flex;align-items:center;gap:7px;
+  background:var(--amber-wash);
+  box-shadow:0 0 0 .5px rgba(180,118,26,.28);
+  border-radius:99px;padding:5px 12px 5px 10px;
+  color:var(--amber);font-size:12px;font-weight:600;
+}
+.when svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.when .mono{font-family:var(--mono);font-weight:500;font-size:11.5px}
+
+.ring{width:26px;height:26px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg);display:block}
+.ring circle{fill:none;stroke-width:2.6;stroke-linecap:round}
+.ring .bg{stroke:rgba(34,29,21,.11)}
+.ring .fg{stroke:var(--amber);stroke-dasharray:69.1;stroke-dashoffset:16.5}
+.ring b{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-family:var(--mono);font-size:8.5px;font-weight:500;color:var(--ink-2);
+}
+
+.btn{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;transition:.14s}
+.btn.ghost{color:var(--ink-2)}
+.btn.ghost:hover{background:rgba(34,29,21,.06);color:var(--ink)}
+.btn.solid{
+  background:var(--ink);color:var(--paper-raised);
+  box-shadow:0 1px 3px rgba(34,29,21,.3),inset 0 1px 0 rgba(255,255,255,.1);
+}
+.btn.solid:hover{background:#332C21}
+.btn.solid kbd{font-family:var(--mono);font-size:10px;opacity:.5;margin-left:5px;font-weight:400}
+
+/* ── preview rail ─────────────────────────────────────────── */
+.rail{
+  border-left:.5px solid var(--rule-2);
+  background:var(--paper-sunk);
+  display:flex;flex-direction:column;min-height:0;
+}
+.railbar{height:52px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px 0 16px;border-bottom:.5px solid var(--rule)}
+.railbar .t{font-size:11.5px;font-weight:600;color:var(--ink-2);letter-spacing:.01em}
+.stage{flex:1;min-height:0;display:grid;place-items:center;padding:18px 0 22px;overflow:hidden}
+
+.phone{
+  width:236px;height:100%;max-height:452px;
+  border-radius:30px;padding:6px;
+  background:linear-gradient(160deg,#3A3226,#191410);
+  box-shadow:var(--shadow-pop),inset 0 0 0 .5px rgba(255,255,255,.14);
+  position:relative;
+}
+.screen{
+  height:100%;border-radius:24px;overflow:hidden;
+  background:#fff;color:#0F1419;position:relative;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+}
+.notch{
+  position:absolute;top:7px;left:50%;transform:translateX(-50%);
+  width:62px;height:17px;border-radius:99px;background:#191410;z-index:4;
+}
+.status{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 15px 4px;font-size:9px;font-weight:600;
+}
+.xhead{display:flex;align-items:center;justify-content:center;padding:6px 0 9px;border-bottom:.5px solid #EFF3F4}
+.xhead svg{width:17px;height:17px;fill:#0F1419}
+.post{padding:11px 13px;display:grid;grid-template-columns:32px 1fr;gap:9px}
+.pav{width:32px;height:32px;border-radius:50%;background:linear-gradient(145deg,#3B342A,#1A160F);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700}
+.pmeta{display:flex;align-items:center;gap:4px;font-size:11.5px}
+.pmeta b{font-weight:700}
+.pmeta span{color:#536471;font-weight:400}
+.ptext{font-size:12.5px;line-height:1.42;margin-top:2px;white-space:pre-wrap}
+.pimg{
+  margin-top:8px;height:112px;border-radius:13px;
+  background:linear-gradient(140deg,#E8C889,#C98F4E);
+  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.1);
+  position:relative;
+}
+.pimg::after{
+  content:"1/4";position:absolute;right:7px;top:7px;
+  font-family:var(--mono);font-size:8px;color:#fff;
+  background:rgba(0,0,0,.42);padding:1px 5px;border-radius:99px;
+}
+.pacts{display:flex;justify-content:space-between;margin-top:10px;padding-right:18px;color:#536471}
+.pacts svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.7;fill:none}
+.ghosted{opacity:.28;pointer-events:none;border-top:.5px solid #EFF3F4}
+
+.railfoot{
+  flex:none;border-top:.5px solid var(--rule);padding:11px 16px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.frow{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3)}
+.frow b{color:var(--ink-2);font-family:var(--mono);font-size:10.5px;font-weight:500}
+
+/* ── caption ──────────────────────────────────────────────── */
+.hint{
+  position:fixed;left:50%;bottom:7px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;color:rgba(34,29,21,.4);letter-spacing:.04em;
+}
+
+/* staged entrance */
+.stg{animation:fade .55s cubic-bezier(.16,1,.3,1) both}
+.stg:nth-child(1){animation-delay:.10s}
+.stg:nth-child(2){animation-delay:.15s}
+.stg:nth-child(3){animation-delay:.20s}
+.stg:nth-child(4){animation-delay:.25s}
+.stg:nth-child(5){animation-delay:.30s}
+.stg:nth-child(6){animation-delay:.35s}
+.stg:nth-child(7){animation-delay:.40s}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div class="win">
+
+  <!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24"><path d="M4 13l6 6L20 6"/></svg>
+      </span>
+      <span class="brand-name">Distribution</span>
+    </div>
+
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input placeholder="Search everything" spellcheck="false">
+      <kbd>⌘K</kbd>
+    </div>
+
+    <div class="scroll">
+      <button class="row on stg">
+        <span class="gl"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="lbl">Queue</span><span class="count">12</span>
+      </button>
+      <button class="row stg">
+        <span class="gl"><svg viewBox="0 0 24 24"><path d="M15 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M15 4v5h5"/></svg></span>
+        <span class="lbl">Drafts</span><span class="count">4</span>
+      </button>
+      <button class="row stg">
+        <span class="gl"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/></svg></span>
+        <span class="lbl">Notes &amp; ideas</span><span class="count">7</span>
+      </button>
+      <button class="row stg">
+        <span class="gl"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>
+        <span class="lbl">Published</span><span class="count">68</span>
+      </button>
+
+      <div class="sec stg">Accounts</div>
+
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+        <span>X</span>
+      </div>
+      <button class="row acct stg"><span class="av" data-p="x">K<i class="dot"></i></span><span class="lbl">@kartikbuilds</span><span class="count">3</span></button>
+      <button class="row acct stg"><span class="av" data-p="x">M<i class="dot"></i></span><span class="lbl">@mysocialapp</span><span class="count">5</span></button>
+
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--ig)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5.4"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="var(--ig)" stroke="none"/></svg>
+        <span>Instagram</span>
+      </div>
+      <button class="row acct stg"><span class="av" data-p="ig">K<i class="dot"></i></span><span class="lbl">@kartik.builds</span><span class="count">2</span></button>
+
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--th)" stroke-width="2" stroke-linecap="round"><path d="M12.6 4C7.9 4 5.2 7.1 5.2 12s2.7 8 7.4 8c3.4 0 5.6-1.6 5.6-3.9 0-2-1.6-3.3-4.1-3.3-2 0-3.3.9-3.3 2.2 0 1 .8 1.6 1.9 1.6 1.6 0 2.6-1.3 2.6-3.4 0-2.6-1.8-4.5-4.4-4.5"/></svg>
+        <span>Threads</span>
+      </div>
+      <button class="row acct stg"><span class="av" data-p="th">K<i class="dot"></i></span><span class="lbl">@kartikbuilds</span><span class="count">1</span></button>
+
+      <div class="plat">
+        <svg viewBox="0 0 24 24" fill="var(--li)"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5M3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.76-2.05 4.02 0 4.76 2.64 4.76 6.08V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.07 1.4-2.07 2.85V21H9z"/></svg>
+        <span>LinkedIn</span>
+      </div>
+      <button class="row acct stg"><span class="av" data-p="li">K<i class="dot off"></i></span><span class="lbl">Kartik Bandarwad</span><span class="count">1</span></button>
+
+      <button class="row addacct" style="margin-top:8px">
+        <span class="gl"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span class="lbl">Add account…</span>
+      </button>
+    </div>
+
+    <div class="sidefoot">
+      <span class="pulse"></span>
+      <span class="t">Next post goes out<b>in 2h 14m</b></span>
+    </div>
+  </aside>
+
+  <!-- ══ LIST ═════════════════════════════════════════════ -->
+  <section class="list">
+    <header class="bar">
+      <div>
+        <h1>Queue</h1>
+        <div class="sub">12 scheduled · 5 accounts</div>
+      </div>
+      <span class="grow"></span>
+      <div class="seg">
+        <button class="on">List</button><button>Week</button><button>Month</button>
+      </div>
+      <button class="icobtn acc" title="New post ⌘N">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </header>
+
+    <div class="feed">
+
+      <div class="day"><h2>Today</h2><span class="dt">SAT 25 JUL</span><span class="ln"></span></div>
+
+      <article class="card sel">
+        <div class="time"><b>11:30</b><i>AM</i></div>
+        <div>
+          <div class="who"><span class="h">@mysocialapp</span><span class="k">Thread</span></div>
+          <div class="body">Most schedulers are built for teams of 30. I built one for a team of one — it runs on my Mac, stores nothing in the cloud, and costs $0/mo. Here's how →</div>
+          <div class="strip"><i class="thumbA"></i><i class="thumbB"></i><i class="thumbC"></i><i class="thumbD"></i></div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+          <span class="st q">Queued</span>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="time"><b>18:00</b><i>PM</i></div>
+        <div>
+          <div class="who"><span class="h">@kartik.builds</span><span class="k">Carousel</span></div>
+          <div class="body">7 things I got wrong building a native Mac app in Tauri — swipe for the ones that cost me a weekend.</div>
+          <div class="strip"><i class="thumbB"></i><i class="thumbD"></i><i class="thumbA"></i><span class="more">+4</span></div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="none" stroke="var(--ig)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5.4"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="var(--ig)" stroke="none"/></svg>
+          <span class="st q">Queued</span>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="time"><b>21:15</b><i>PM</i></div>
+        <div>
+          <div class="who"><span class="h">@kartikbuilds</span><span class="k">Post</span></div>
+          <div class="body">shipping something small every saturday is the only consistency hack that has ever worked for me</div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="none" stroke="var(--th)" stroke-width="2" stroke-linecap="round"><path d="M12.6 4C7.9 4 5.2 7.1 5.2 12s2.7 8 7.4 8c3.4 0 5.6-1.6 5.6-3.9 0-2-1.6-3.3-4.1-3.3-2 0-3.3.9-3.3 2.2 0 1 .8 1.6 1.9 1.6 1.6 0 2.6-1.3 2.6-3.4 0-2.6-1.8-4.5-4.4-4.5"/></svg>
+          <span class="st q">Queued</span>
+        </div>
+      </article>
+
+      <div class="day"><h2>Tomorrow</h2><span class="dt">SUN 26 JUL</span><span class="ln"></span></div>
+
+      <article class="card">
+        <div class="time"><b>09:00</b><i>AM</i></div>
+        <div>
+          <div class="who"><span class="h">@mysocialapp</span><span class="k">Post</span></div>
+          <div class="body">Local-first means your drafts survive the company that made the app. Screenshot of the SQLite file, because that's the whole backend.</div>
+          <div class="strip"><i class="thumbC"></i></div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+          <span class="st q">Queued</span>
+        </div>
+      </article>
+
+      <article class="card draft">
+        <div class="time"><b>--:--</b><i>DRAFT</i></div>
+        <div>
+          <div class="who"><span class="h">Kartik Bandarwad</span><span class="k">Article</span></div>
+          <div class="body">Why I stopped paying $49/mo for a social scheduler and spent three weekends instead…</div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="var(--li)"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5M3 9h4v12H3zM9 9h3.8v1.7h.05c.53-1 1.83-2.05 3.76-2.05 4.02 0 4.76 2.64 4.76 6.08V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.07 1.4-2.07 2.85V21H9z"/></svg>
+          <span class="st">Draft</span>
+        </div>
+      </article>
+
+      <div class="day"><h2>Monday</h2><span class="dt">27 JUL</span><span class="ln"></span></div>
+
+      <article class="card">
+        <div class="time"><b>08:30</b><i>AM</i></div>
+        <div>
+          <div class="who"><span class="h">@kartikbuilds</span><span class="k">Post</span></div>
+          <div class="body">week 12 of building in public. revenue: $0. lessons: several. still going.</div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="var(--x)"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+          <span class="st q">Queued</span>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="time"><b>19:00</b><i>PM</i></div>
+        <div>
+          <div class="who"><span class="h">@kartik.builds</span><span class="k">Reel</span></div>
+          <div class="body">30-second screen recording: idea → scheduled post in four keystrokes.</div>
+          <div class="strip"><i class="thumbD"></i></div>
+        </div>
+        <div class="tail">
+          <svg class="pgl" viewBox="0 0 24 24" fill="none" stroke="var(--ig)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5.4"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1.1" fill="var(--ig)" stroke="none"/></svg>
+          <span class="st q">Queued</span>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ══ DETAIL ═══════════════════════════════════════════ -->
+  <section class="detail">
+    <div class="compose">
+
+      <div class="tgt">
+        <span class="lb">Posting to</span>
+        <button class="chip on"><span class="av" data-p="x">M</span>@mysocialapp</button>
+        <button class="chip"><span class="av" data-p="th">K</span>@kartikbuilds</button>
+        <button class="chip add">+ account</button>
+      </div>
+
+      <div class="sheet">
+        <input class="ttl" value="Local-first launch thread" spellcheck="false">
+        <textarea class="write" spellcheck="false">Most schedulers are built for teams of 30.
+
+I built one for a team of one — it runs on my Mac, stores nothing in the cloud, and costs $0/mo.
+
+Here's how it works →</textarea>
+
+        <div class="media">
+          <div class="mtile thumbA"><span>01</span></div>
+          <div class="mtile thumbB"><span>02</span></div>
+          <div class="mtile thumbC"><span>03</span></div>
+          <div class="mtile thumbD"><span>04</span></div>
+          <button class="mtile add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+      </div>
+
+      <div class="dock">
+        <button class="when">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span class="mono">Today · 11:30</span>
+        </button>
+        <div class="ring">
+          <svg viewBox="0 0 26 26"><circle class="bg" cx="13" cy="13" r="11"/><circle class="fg" cx="13" cy="13" r="11"/></svg>
+          <b>66</b>
+        </div>
+        <span class="grow"></span>
+        <button class="btn ghost">Save draft</button>
+        <button class="btn solid">Schedule<kbd>⌘⏎</kbd></button>
+      </div>
+    </div>
+
+    <!-- preview rail -->
+    <aside class="rail">
+      <div class="railbar">
+        <span class="t">Preview</span>
+        <span class="grow"></span>
+        <div class="seg"><button class="on">Phone</button><button>Feed</button></div>
+      </div>
+
+      <div class="stage">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="status"><span>11:30</span><span>▮▮▮ ᯤ ▮</span></div>
+            <div class="xhead">
+              <svg viewBox="0 0 24 24"><path d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.83l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.12z"/></svg>
+            </div>
+            <div class="post">
+              <div class="pav">M</div>
+              <div>
+                <div class="pmeta"><b>mysocial</b><span>@mysocialapp · now</span></div>
+                <div class="ptext">Most schedulers are built for teams of 30.
+
+I built one for a team of one — it runs on my Mac, stores nothing in the cloud, and costs $0/mo.
+
+Here's how it works →</div>
+                <div class="pimg"></div>
+                <div class="pacts">
+                  <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2.5-2.5A8 8 0 1 1 21 12z"/></svg>
+                  <svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/></svg>
+                  <svg viewBox="0 0 24 24"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1L12 21l8.8-8.3a5 5 0 0 0 0-7.1z"/></svg>
+                  <svg viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M12 3v13M8 7l4-4 4 4"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="post ghosted">
+              <div class="pav">M</div>
+              <div>
+                <div class="pmeta"><b>mysocial</b><span>@mysocialapp</span></div>
+                <div class="ptext">1. Everything lives in one SQLite file…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="railfoot">
+        <div class="frow"><span>Characters</span><b>184 / 280</b></div>
+        <div class="frow"><span>Media</span><b>4 images</b></div>
+        <div class="frow"><span>Thread parts</span><b>1 of 5</b></div>
+      </div>
+    </aside>
+  </section>
+
+</div>
+
+<div class="hint">concept — warm workstation · v3</div>
+
+</body>
+</html>

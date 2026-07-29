@@ -1,0 +1,24 @@
+# dependencies
+node_modules
+dist
+dist-ssr
+
+# rust / tauri
+src-tauri/target
+
+# logs & os
+*.log
+.DS_Store
+
+# local env / secrets
+.env
+.env.local
+
+# vendored tooling
+.claude/skills/
+.impeccable/
+
+# next.js / vercel
+web/.next
+web/node_modules
+.vercel

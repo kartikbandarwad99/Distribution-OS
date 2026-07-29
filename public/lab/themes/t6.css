@@ -1,0 +1,145 @@
+/* ═══ T6 · CLASSICAL REMIX — book typography, Mac chrome ════════════════════
+   The risk here is obvious: serif plus warm paper plus a red accent is the
+   single most common AI look there is. This rendition refuses it on three
+   counts — the stock is cool grey-white and never cream; the serif is a TEXT
+   face set at reading size with old-style figures, not a display face blown up;
+   and the red is rubrication, used only to mark and number, the way a scribe
+   used it, never as a brand colour on a button. The chrome underneath stays
+   plainly Mac.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.stage[data-theme="t6"] {
+  --ui: "EB Garamond", Georgia, serif;
+  --display: "EB Garamond", Georgia, serif;
+  --sans: "Public Sans", -apple-system, sans-serif;
+  --mono: "Azeret Mono", ui-monospace, monospace;
+  --rubric: var(--accent);
+  font-family: var(--ui);
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  background: var(--ground);
+}
+/* Chrome speaks sans; the reading matter speaks Garamond. */
+.stage[data-theme="t6"] :is(.sechead, .ahead, .lead, .corner, .spinehead, .trayhead b, .why, .k, .pend, .labkeys, .verb, .btn, .seg button, .fchip, .chip) {
+  font-family: var(--sans);
+}
+.stage[data-theme="t6"] :is(.meta, .time, .stime, .evt, .evn, .cd) { font-family: var(--mono); font-size: calc(var(--f-1) * .76); font-variant-numeric: tabular-nums; }
+.stage[data-theme="t6"] :is(.sechead, .ahead, .lead, .corner, .spinehead, .why) { letter-spacing: .14em; text-transform: uppercase; font-size: calc(var(--f-1) * .7); font-weight: 600; }
+
+.stage[data-theme="t6"] .side, .stage[data-theme="t6"] .spine { background: color-mix(in srgb, var(--ink) 3%, var(--ground)); border-right: 1px solid var(--rule); }
+.stage[data-theme="t6"] .pane { background: var(--raised); }
+.stage[data-theme="t6"] :is(.composer, .inspector) { border-left: 1px solid var(--rule); }
+.stage[data-theme="t6"] :is(.bar, .cmdbar) { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t6"] :is(.dock, .statusline, .tray, .nextdue) { border-top: 1px solid var(--rule); }
+.stage[data-theme="t6"] .ttl h1 { font-size: var(--f2); font-weight: 500; letter-spacing: 0; }
+.stage[data-theme="t6"] .ttl .sub { font-family: var(--sans); font-size: calc(var(--f-1) * .84); }
+
+/* Reading matter gets real leading and a real measure. */
+.stage[data-theme="t6"] .body { font-size: calc(var(--f0) * 1.12); line-height: 1.5; }
+.stage[data-theme="t6"] :is(.ptext, .editor, .vbody, .thesis, .fbody, .txt p) { font-size: calc(var(--f0) * 1.14); line-height: 1.66; }
+.stage[data-theme="t6"] .editor { max-width: 66ch; }
+.stage[data-theme="t6"] .who .h { font-family: var(--sans); font-size: calc(var(--f-1) * .88); font-weight: 500; }
+
+/* Rubrication: the red appears as marks and numbers, not as fills. */
+.stage[data-theme="t6"] .day h2 { font-size: var(--f1); font-weight: 500; }
+.stage[data-theme="t6"] .day h2::before { content: "¶ "; color: var(--rubric); }
+.stage[data-theme="t6"] .sdiv b { font-family: var(--ui); font-size: var(--f0); text-transform: none; letter-spacing: 0; font-weight: 500; }
+.stage[data-theme="t6"] .sdiv b::before { content: "¶ "; color: var(--rubric); }
+.stage[data-theme="t6"] .k.warn { color: var(--rubric); font-weight: 600; }
+.stage[data-theme="t6"] .why { color: var(--rubric); }
+.stage[data-theme="t6"] .pmeta span:first-child { color: var(--rubric); }
+.stage[data-theme="t6"] :is(.lrow, .scard).on::before { content: "❧"; color: var(--rubric); margin-right: 5px; font-size: .9em; }
+
+.stage[data-theme="t6"] :is(.lrow, .arow, .scard, .ev, .tcard, .unrow, .srowhead):hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t6"] :is(.lrow, .scard).on { background: color-mix(in srgb, var(--ink) 7%, transparent); font-weight: 500; }
+.stage[data-theme="t6"] .pmark { background: var(--ink); color: var(--ground); font-family: var(--display); font-weight: 500; }
+.stage[data-theme="t6"] .field { background: color-mix(in srgb, var(--ink) 4%, transparent); box-shadow: inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t6"] .av { background: var(--ink-3); color: var(--ground); font-family: var(--display); }
+.stage[data-theme="t6"] .av[data-platform="linkedin"] { background: #46617a; }
+.stage[data-theme="t6"] .av[data-platform="instagram"] { background: #8f6272; }
+.stage[data-theme="t6"] .av[data-platform="reddit"] { background: var(--rubric); }
+
+.stage[data-theme="t6"] .seg { box-shadow: inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t6"] .seg button { font-size: calc(var(--f-1) * .84); }
+.stage[data-theme="t6"] .seg button.on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t6"] .icobtn { box-shadow: inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t6"] .icobtn.acc { background: var(--ink); color: var(--ground); box-shadow: none; }
+.stage[data-theme="t6"] :is(.btn, .verb) { box-shadow: inset 0 0 0 1px var(--rule-2); font-size: calc(var(--f-1) * .86); font-weight: 500; }
+.stage[data-theme="t6"] :is(.btn, .verb).pri { background: var(--ink); color: var(--ground); box-shadow: none; }
+.stage[data-theme="t6"] .verb.ghost { box-shadow: none; color: var(--ink-3); }
+.stage[data-theme="t6"] .chip { box-shadow: inset 0 0 0 1px var(--rule); font-size: calc(var(--f-1) * .84); }
+.stage[data-theme="t6"] .chip.on { box-shadow: inset 0 0 0 1px var(--ink-3); }
+.stage[data-theme="t6"] .sched { box-shadow: inset 0 0 0 1px var(--rubric); color: var(--rubric); font-family: var(--sans); font-size: calc(var(--f-1) * .84); }
+.stage[data-theme="t6"] .sched.ghost { box-shadow: inset 0 0 0 1px var(--rule-2); color: var(--ink-3); }
+
+.stage[data-theme="t6"] :is(.row.card, .srow, .unrow, .lane) { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t6"][data-sel="rail"] [data-sel] { box-shadow: inset 2px 0 0 var(--rubric); background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t6"][data-sel="fill"] [data-sel] { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.stage[data-theme="t6"][data-sel="outline"] [data-sel] { box-shadow: inset 0 0 0 1px var(--ink-3); }
+.stage[data-theme="t6"][data-sel="invert"] [data-sel] { background: var(--ink); }
+.stage[data-theme="t6"][data-sel="invert"] [data-sel] :is(.body, .h, .k, .time, .pgl, .evt, .evb) { color: var(--ground); }
+
+/* stream */
+.stage[data-theme="t6"] .cmd { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule-2); font-size: var(--f2); }
+.stage[data-theme="t6"] .cmd .prompt { color: var(--rubric); font-family: var(--display); }
+.stage[data-theme="t6"] .tok.when { background: none; color: var(--rubric); padding: 0; font-style: italic; }
+.stage[data-theme="t6"] .tok.who { background: none; color: var(--ink-2); padding: 0; font-style: italic; }
+.stage[data-theme="t6"] .caret { background: var(--rubric); }
+.stage[data-theme="t6"] .pgood { color: var(--rubric); }
+.stage[data-theme="t6"] .srow.open { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+
+/* timeline */
+.stage[data-theme="t6"] .gridhead { background: var(--raised); border-bottom: 1px solid var(--rule-2); }
+.stage[data-theme="t6"] .dhead b { font-size: var(--f0); font-weight: 500; }
+.stage[data-theme="t6"] .dhead.today b { color: var(--rubric); }
+.stage[data-theme="t6"] .dhead.today b::after { content: " ·"; }
+.stage[data-theme="t6"] .lanelab { border-right: 1px solid var(--rule); background: var(--raised); }
+.stage[data-theme="t6"] .cell + .cell, .stage[data-theme="t6"] .dhead + .dhead { box-shadow: inset 1px 0 0 var(--rule); }
+.stage[data-theme="t6"] .ev { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.stage[data-theme="t6"] .ev[data-status="failed"] { box-shadow: inset 0 0 0 1px var(--rubric); }
+.stage[data-theme="t6"] .tcard { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule-2); }
+
+/* desk — the theme's best case, since this flow is mostly reading */
+.stage[data-theme="t6"] .deskbody { padding: 34px 52px 40px; }
+.stage[data-theme="t6"] .idea h1 { font-weight: 500; letter-spacing: -.006em; line-height: 1.1; }
+.stage[data-theme="t6"] .idea h1::first-letter { color: var(--rubric); }
+.stage[data-theme="t6"] .thesis { max-width: 58ch; }
+.stage[data-theme="t6"] .vcard { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t6"] .vhead { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t6"] .vfoot { border-top: 1px solid var(--rule); }
+.stage[data-theme="t6"] .vh { font-family: var(--sans); font-size: calc(var(--f-1) * .86); }
+.stage[data-theme="t6"] .vcard[data-status="idea"] { background: none; }
+.stage[data-theme="t6"] .todo .box { box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t6"] .todo.done .box { background: var(--ink); color: var(--ground); box-shadow: none; }
+.stage[data-theme="t6"] .todo { font-size: calc(var(--f0) * 1.08); }
+
+/* triage */
+.stage[data-theme="t6"] .focus { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule-2); }
+.stage[data-theme="t6"] .fbody { font-size: var(--f2); line-height: 1.52; }
+.stage[data-theme="t6"] [data-urgency="problem"] .udot { background: var(--rubric); }
+.stage[data-theme="t6"] .inboxend b { font-family: var(--display); font-size: var(--f1); font-weight: 500; }
+.stage[data-theme="t6"] .progress i { background: var(--rubric); }
+
+/* library */
+.stage[data-theme="t6"] .txt { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); }
+.stage[data-theme="t6"] .txt .lab { font-family: var(--sans); }
+.stage[data-theme="t6"] .txt.note .lab { color: var(--rubric); }
+.stage[data-theme="t6"] .artbody { background: var(--raised); box-shadow: inset 0 0 0 1px var(--rule); border-top: 0; }
+.stage[data-theme="t6"] .artbody h3 { font-weight: 500; font-size: var(--f1); }
+.stage[data-theme="t6"] .artbody .src { font-family: var(--mono); color: var(--rubric); }
+.stage[data-theme="t6"] .edge { background: color-mix(in srgb, var(--ink) 12%, var(--raised)); }
+.stage[data-theme="t6"] .pill { background: rgb(255 255 255 / .88); color: #22242a; font-family: var(--sans); font-size: calc(var(--f-1) * .74); }
+.stage[data-theme="t6"] .scrim { background: linear-gradient(transparent, rgb(20 20 24 / .6)); }
+.stage[data-theme="t6"] .mt { font-family: var(--ui); font-size: var(--f-1); }
+.stage[data-theme="t6"] .fchip { box-shadow: inset 0 0 0 1px var(--rule); font-size: calc(var(--f-1) * .84); }
+.stage[data-theme="t6"] .fchip.on { background: var(--ink); color: var(--ground); box-shadow: none; }
+.stage[data-theme="t6"] .fchip.on .c { color: color-mix(in srgb, var(--ground) 70%, var(--ink)); }
+.stage[data-theme="t6"] .ph { background: linear-gradient(155deg, #cdcfd4, #a9acb4); }
+.stage[data-theme="t6"] .ph[data-tone="1"] { background: linear-gradient(155deg, #c4c8d0, #9ea3ad); }
+.stage[data-theme="t6"] .ph[data-tone="2"] { background: linear-gradient(155deg, #d1c8cc, #aba1a6); }
+.stage[data-theme="t6"] .ph[data-tone="3"] { background: linear-gradient(155deg, #c9cfc9, #a3aaa2); }
+.stage[data-theme="t6"] .ph[data-tone="4"] { background: linear-gradient(155deg, #c3ccd2, #9ba5ad); }
+.stage[data-theme="t6"] .ph[data-tone="5"] { background: linear-gradient(155deg, #d0cdc5, #aaa79d); }
+.stage[data-theme="t6"] .ph[data-tone="6"] { background: linear-gradient(155deg, #c9c6d2, #a3a0ad); }
+.stage[data-theme="t6"] .ph[data-tone="7"] { background: linear-gradient(155deg, #cecbbf, #a8a596); }
+.stage[data-theme="t6"] .ph[data-tone="8"] { background: linear-gradient(155deg, #c5cfcb, #9daaa5); }
+.stage[data-theme="t6"] .ph[data-tone="9"] { background: linear-gradient(155deg, #cbc7ce, #a5a1a9); }

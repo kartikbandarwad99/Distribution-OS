@@ -1,0 +1,148 @@
+/* ═══ T5 · DITHER MONO — 1-bit, and Mac to the bone ═════════════════════════
+   Two inks and no third. Every grey on screen is a dither pattern, not a tint,
+   because a 1-bit display has no greys — which is also the most literally
+   Macintosh thing in this lab. Hard 1px borders, zero radius, selection is a
+   full invert, media is a bayer halftone. Pixel lettering for chrome labels,
+   a clean grotesque for anything you actually read.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.stage[data-theme="t5"] {
+  --ui: "Public Sans", -apple-system, sans-serif;
+  --display: "Pixelify Sans", "Public Sans", sans-serif;
+  --mono: "Azeret Mono", ui-monospace, monospace;
+  /* 50% and 25% dithers, standing in for the greys the palette does not have. */
+  --d50: repeating-conic-gradient(var(--ink) 0% 25%, transparent 0% 50%) 0 0 / 4px 4px;
+  --d25: repeating-conic-gradient(var(--ink) 0% 25%, transparent 0% 50%) 0 0 / 6px 6px;
+  --hair: var(--ink);
+  font-family: var(--ui);
+  background: var(--ground);
+}
+.stage[data-theme="t5"] :is(.meta, .time, .stime, .evt, .evn, .c, .cd, .pend) { font-family: var(--mono); font-size: calc(var(--f-1) * .78); }
+.stage[data-theme="t5"] :is(.ttl h1, .day h2, .sdiv b, .sechead, .ahead, .lead, .corner, .spinehead, .trayhead b, .why, .dhead b, .idea h1, .ctitle, .artbody h3, .inboxend b) {
+  font-family: var(--display); font-weight: 400; letter-spacing: .01em;
+}
+.stage[data-theme="t5"] :is(.sechead, .ahead, .lead, .corner, .spinehead, .why) { text-transform: uppercase; font-size: calc(var(--f-1) * .84); color: var(--ink); }
+
+.stage[data-theme="t5"] .side, .stage[data-theme="t5"] .spine { background: var(--ground); border-right: 1px solid var(--hair); }
+.stage[data-theme="t5"] .pane { background: var(--ground); }
+.stage[data-theme="t5"] :is(.composer, .inspector) { border-left: 1px solid var(--hair); }
+/* The classic Mac title bar: ruled stripes, not a gradient. */
+/* Ruled stripes, the way the classic Mac drew an active title bar. The stripe
+   layer must be positioned against the bar itself — anchored to .win it paints
+   over the whole window. */
+.stage[data-theme="t5"] :is(.bar, .cmdbar) {
+  position: relative;
+  border-bottom: 1px solid var(--hair);
+  background: repeating-linear-gradient(0deg, var(--ink) 0 1px, transparent 1px 3px);
+}
+.stage[data-theme="t5"] :is(.bar, .cmdbar) > * { position: relative; z-index: 1; }
+/* Labels inside the bar sit on an opaque patch so stripes never run behind type. */
+.stage[data-theme="t5"] :is(.bar, .cmdbar) > :is(.ttl, .lead, .seg, .btn, .icobtn, .weeknav, .progress, .chip, .meta, .grow) { background-color: var(--ground); }
+.stage[data-theme="t5"] .ttl { padding-right: 9px; }
+.stage[data-theme="t5"] :is(.dock, .statusline, .tray, .nextdue) { border-top: 1px solid var(--hair); }
+.stage[data-theme="t5"] .ttl h1 { font-size: var(--f1); }
+/* .pmeta is also .meta but must keep its reveal-on-hover default. */
+.stage[data-theme="t5"] .ttl .sub, .stage[data-theme="t5"] .meta:not(.pmeta) { color: var(--ink); opacity: .66; }
+
+.stage[data-theme="t5"] :is(.proj, .field, .btn, .verb, .chip, .seg, .icobtn, .tcard, .vcard, .focus, .ev, .txt, .frame, .fchip, .pill, .edge, .todo .box, .av, .udot, .pdot, .strip i, .progress, .pulse) { border-radius: 0; }
+.stage[data-theme="t5"] :is(.proj, .field, .btn, .verb, .seg, .icobtn, .tcard, .vcard, .ev, .txt, .frame, .fchip, .chip) { box-shadow: inset 0 0 0 1px var(--hair); }
+.stage[data-theme="t5"] :is(.row.card, .srow, .unrow, .lane) { border-bottom: 1px solid var(--hair); }
+.stage[data-theme="t5"] .lists { gap: 0; }
+.stage[data-theme="t5"] :is(.lrow, .arow) { border-bottom: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); }
+.stage[data-theme="t5"] :is(.lrow, .arow, .scard, .ev, .tcard, .unrow, .srowhead):hover { background: var(--d25); }
+.stage[data-theme="t5"] :is(.lrow, .scard).on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] :is(.lrow, .scard).on .c { color: var(--ground); opacity: .7; }
+.stage[data-theme="t5"] .pmark { background: var(--ink); color: var(--ground); font-family: var(--display); }
+.stage[data-theme="t5"] .av { background: var(--ink); color: var(--ground); box-shadow: none; font-family: var(--mono); font-size: calc(var(--f-1) * .7); }
+.stage[data-theme="t5"] .av .dot { border-radius: 0; background: var(--ink); border-color: var(--ground); }
+.stage[data-theme="t5"] .av .dot[data-on="false"] { background: var(--ground); box-shadow: inset 0 0 0 1px var(--ink); }
+
+.stage[data-theme="t5"] .seg button.on, .stage[data-theme="t5"] :is(.btn, .verb).pri { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .icobtn.acc { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .verb.ghost { box-shadow: none; }
+.stage[data-theme="t5"] kbd { background: var(--ground); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); }
+.stage[data-theme="t5"] :is(.btn, .verb).pri kbd { background: var(--ink); color: var(--ground); box-shadow: inset 0 0 0 1px var(--ground); }
+
+.stage[data-theme="t5"] .day, .stage[data-theme="t5"] .sdiv { background: var(--ground); border-bottom: 1px solid var(--hair); border-top: 1px solid var(--hair); padding: 6px 4px; }
+.stage[data-theme="t5"] .day h2, .stage[data-theme="t5"] .sdiv b { text-transform: uppercase; font-size: calc(var(--f-1) * .94); }
+.stage[data-theme="t5"] .day .ln, .stage[data-theme="t5"] .sdiv i { display: none; }
+.stage[data-theme="t5"] .who .h { font-weight: 700; }
+.stage[data-theme="t5"] .k { text-transform: uppercase; font-size: calc(var(--f-1) * .74); letter-spacing: .08em; color: var(--ink); opacity: .7; }
+.stage[data-theme="t5"] .k.warn { opacity: 1; background: var(--ink); color: var(--ground); padding: 0 5px; }
+
+/* Selection inverts the whole row — the only 1-bit way to say "this one". */
+.stage[data-theme="t5"][data-sel="invert"] [data-sel],
+.stage[data-theme="t5"][data-sel="fill"] [data-sel] { background: var(--ink); }
+.stage[data-theme="t5"][data-sel="invert"] [data-sel] :is(.body, .h, .k, .time, .pgl, .evt, .evb, .evn, .more, .meta),
+.stage[data-theme="t5"][data-sel="fill"] [data-sel] :is(.body, .h, .k, .time, .pgl, .evt, .evb, .evn, .more, .meta) { color: var(--ground); opacity: 1; }
+.stage[data-theme="t5"][data-sel="invert"] [data-sel] .k.warn { background: var(--ground); color: var(--ink); }
+.stage[data-theme="t5"][data-sel="rail"] [data-sel] { box-shadow: inset 5px 0 0 var(--ink); background: var(--d25); }
+.stage[data-theme="t5"][data-sel="outline"] [data-sel] { box-shadow: inset 0 0 0 2px var(--ink); }
+
+.stage[data-theme="t5"] .chip.on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .sched { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .sched.ghost { background: var(--d25); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.stage[data-theme="t5"] .pdot, .stage[data-theme="t5"] .udot { background: var(--ink); }
+.stage[data-theme="t5"] .pline { background: var(--ink); }
+.stage[data-theme="t5"] .ring { background: conic-gradient(var(--ink) calc(var(--pct) * 360deg), transparent 0); box-shadow: inset 0 0 0 1px var(--ink); }
+.stage[data-theme="t5"] .strip i { background: var(--d50); box-shadow: inset 0 0 0 1px var(--ink); }
+
+/* stream */
+.stage[data-theme="t5"] .cmd { background: var(--ground); }
+.stage[data-theme="t5"] .tok { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .caret { background: var(--ink); }
+.stage[data-theme="t5"] .pgood { color: var(--ink); }
+.stage[data-theme="t5"] .srow.open { background: var(--d25); }
+.stage[data-theme="t5"] .srow.open .sopen { background: var(--ground); }
+
+/* timeline */
+.stage[data-theme="t5"] .gridhead { background: var(--ground); border-bottom: 1px solid var(--hair); }
+.stage[data-theme="t5"] .lanelab { background: var(--ground); border-right: 1px solid var(--hair); }
+.stage[data-theme="t5"] .cell + .cell, .stage[data-theme="t5"] .dhead + .dhead { box-shadow: inset 1px 0 0 color-mix(in srgb, var(--ink) 34%, transparent); }
+.stage[data-theme="t5"] .cell.empty { background: var(--d25); }
+.stage[data-theme="t5"] .cell.today { box-shadow: inset 0 0 0 2px var(--ink); }
+.stage[data-theme="t5"] .ev { background: var(--ground); }
+.stage[data-theme="t5"] .ev[data-status="failed"] { background: var(--d50); }
+.stage[data-theme="t5"] .tcard { background: var(--ground); }
+
+/* desk */
+.stage[data-theme="t5"] .idea h1 { font-size: var(--f3); line-height: 1.16; }
+.stage[data-theme="t5"] .vcard { background: var(--ground); }
+.stage[data-theme="t5"] .vhead { border-bottom: 1px solid var(--hair); }
+.stage[data-theme="t5"] .vfoot { border-top: 1px solid var(--hair); }
+.stage[data-theme="t5"] .vcard[data-status="idea"] { background: var(--d25); }
+.stage[data-theme="t5"] .todo .box { box-shadow: inset 0 0 0 1px var(--ink); }
+.stage[data-theme="t5"] .todo.done .box { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .todo.done { opacity: .55; }
+
+/* triage */
+.stage[data-theme="t5"] .focus { background: var(--ground); box-shadow: inset 0 0 0 2px var(--ink); }
+.stage[data-theme="t5"] .why { letter-spacing: .1em; }
+.stage[data-theme="t5"] [data-urgency] .udot { background: var(--ink); }
+.stage[data-theme="t5"] [data-urgency="problem"] .udot { background: var(--ground); box-shadow: inset 0 0 0 2px var(--ink); }
+.stage[data-theme="t5"] [data-urgency="stale"] .udot, .stage[data-theme="t5"] [data-urgency="gap"] .udot { background: var(--d50); box-shadow: inset 0 0 0 1px var(--ink); }
+.stage[data-theme="t5"] .progress { background: var(--ground); box-shadow: inset 0 0 0 1px var(--ink); }
+.stage[data-theme="t5"] .progress i { background: var(--ink); }
+
+/* library */
+.stage[data-theme="t5"] .txt { background: var(--ground); }
+.stage[data-theme="t5"] .txt.note { background: var(--d25); }
+.stage[data-theme="t5"] .artbody { box-shadow: inset 0 0 0 1px var(--hair); border-top: 0; }
+.stage[data-theme="t5"] .edge { background: var(--ground); box-shadow: inset 0 0 0 1px var(--ink); }
+.stage[data-theme="t5"] .pill { background: var(--ink); color: var(--ground); font-family: var(--mono); }
+.stage[data-theme="t5"] .playb { background: var(--ground); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); backdrop-filter: none; }
+.stage[data-theme="t5"] .scrim { background: none; }
+.stage[data-theme="t5"] .mt { color: var(--ground); background: var(--ink); padding: 2px 5px; display: inline-block; left: 6px; right: auto; max-width: calc(100% - 12px); }
+.stage[data-theme="t5"] .fchip.on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t5"] .fchip.on .c { color: var(--ground); }
+/* Bayer-ish halftone at four densities — the 1-bit way to render a photo. */
+.stage[data-theme="t5"] .ph { background: repeating-conic-gradient(var(--ink) 0% 25%, var(--ground) 0% 50%) 0 0 / 4px 4px; }
+.stage[data-theme="t5"] .ph[data-tone="1"] { background: repeating-conic-gradient(var(--ink) 0% 25%, var(--ground) 0% 50%) 0 0 / 3px 3px; }
+.stage[data-theme="t5"] .ph[data-tone="2"] { background: repeating-conic-gradient(var(--ink) 0% 25%, var(--ground) 0% 50%) 0 0 / 6px 6px; }
+.stage[data-theme="t5"] .ph[data-tone="3"] { background: repeating-linear-gradient(45deg, var(--ink) 0 1px, var(--ground) 1px 4px); }
+.stage[data-theme="t5"] .ph[data-tone="4"] { background: repeating-conic-gradient(var(--ink) 0% 25%, var(--ground) 0% 50%) 0 0 / 8px 8px; }
+.stage[data-theme="t5"] .ph[data-tone="5"] { background: repeating-linear-gradient(0deg, var(--ink) 0 1px, var(--ground) 1px 3px); }
+.stage[data-theme="t5"] .ph[data-tone="6"] { background: repeating-conic-gradient(var(--ink) 0% 25%, var(--ground) 0% 50%) 0 0 / 5px 5px; }
+.stage[data-theme="t5"] .ph[data-tone="7"] { background: repeating-linear-gradient(135deg, var(--ink) 0 1px, var(--ground) 1px 5px); }
+.stage[data-theme="t5"] .ph[data-tone="8"] { background: repeating-conic-gradient(var(--ink) 0% 25%, var(--ground) 0% 50%) 0 0 / 7px 7px; }
+.stage[data-theme="t5"] .ph[data-tone="9"] { background: repeating-linear-gradient(90deg, var(--ink) 0 1px, var(--ground) 1px 4px); }

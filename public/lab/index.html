@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Distribution OS — direction lab</title>
+
+<!--
+  ════════════════════════════════════════════════════════════════════════════
+  DIRECTION LAB — three axes: theme × flow × screen.
+
+  THESIS. A direction shown as one screen is not a product, it is a mood. The
+  first lab compared five home screens and could not be chosen between, because
+  the question "where do assets live, where do eleven accounts live, where do
+  the numbers live" was never answered. So a FLOW is now a whole application
+  with its own screen set, and the SCREEN axis walks it.
+
+  SPINE. Each flow is organised along exactly one axis, and that axis decides
+  where every feature lands — analytics included.
+    F1 Classic   places      · a route per feature; analytics is a route
+    F2 Studio    material    · shelf, bench, dock; numbers ride on the material
+    F3 Channels  destination · eleven accounts are the home screen
+    F4 Pipeline  readiness   · six gates; analytics is the last column
+    F5 Almanac   time        · one axis, past and future; no analytics screen
+
+  STORY. Hold a flow and walk its screens to judge completeness. Hold a screen
+  and cycle flows to judge the idea. Hold both and cycle themes to judge
+  material. Copy CSS lands the winning tokens in src/styles/tokens.css.
+
+  FIRST VIEWPORT. Three selector rows — themes, flows, screens — and one full
+  macOS window filling everything below.
+
+  FORM. Comparison harness on three axes. Seed key b5e7f13b.
+  ════════════════════════════════════════════════════════════════════════════
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Libre+Franklin:wght@300;400;500;600&family=Pixelify+Sans:wght@400;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="themes/t1.css">
+<link rel="stylesheet" href="themes/t2.css">
+<link rel="stylesheet" href="themes/t3.css">
+<link rel="stylesheet" href="themes/t4.css">
+<link rel="stylesheet" href="themes/t5.css">
+<link rel="stylesheet" href="themes/t6.css">
+</head>
+<body data-drawer="off">
+
+<header class="labbar">
+  <div class="labmark"><b>Distribution OS</b><span>Direction lab</span></div>
+  <nav class="labtabs" id="tabs" aria-label="Themes"></nav>
+  <div class="labtools">
+    <button class="labbtn" id="allthemes">All themes</button>
+    <button class="labbtn" id="tweakbtn">Tweaks</button>
+    <kbd class="labkeys">1–6 theme · G all · Y tweaks</kbd>
+  </div>
+</header>
+
+<nav class="flowbar" aria-label="Flows">
+  <span class="flowlab">Flow</span>
+  <div class="labtabs" id="ftabs"></div>
+  <div class="labtools">
+    <button class="labbtn" id="allflows">All flows</button>
+    <kbd class="labkeys">Q W E R T · F all</kbd>
+  </div>
+</nav>
+
+<nav class="screenbar" aria-label="Screens">
+  <span class="flowlab" id="spinelab">Screen</span>
+  <div class="labtabs" id="stabs"></div>
+  <div class="labtools">
+    <button class="labbtn" id="allscreens">All screens</button>
+    <kbd class="labkeys">← → walk · A all</kbd>
+  </div>
+</nav>
+
+<main id="deck" class="deck" data-mode="single"></main>
+
+<aside id="drawer" class="drawer" hidden aria-label="Tweaks">
+  <header class="dhead">
+    <b id="dtitle">Tweaks</b>
+    <span class="dirty" id="ddirty" hidden>edited</span>
+    <button class="dclose" id="dclose" aria-label="Close tweaks">✕</button>
+  </header>
+  <div class="dbody" id="dbody"></div>
+  <footer class="dfoot">
+    <button class="dbtn" id="copycss">Copy CSS</button>
+    <button class="dbtn ghost" id="resetcss">Reset all</button>
+  </footer>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

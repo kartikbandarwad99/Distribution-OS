@@ -1,0 +1,133 @@
+/* ═══ T2 · PRINT-TECH PAPER — cool stock, spot ink, no light ════════════════
+   Deliberately NOT the cream-and-serif rendition, which is the exact look
+   impeccable flags as the first AI cluster. This is technical print: a cool
+   bright stock, hairline keylines around everything, mono field labels, one
+   spot red, crop marks at the window corners — and zero shadow, because a
+   printed sheet has no light source. Mac-native via density and hairlines,
+   not via gloss.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.stage[data-theme="t2"] {
+  --ui: "Archivo", "Helvetica Neue", sans-serif;
+  --display: "Archivo", sans-serif;
+  --mono: "Azeret Mono", ui-monospace, monospace;
+  --keyline: color-mix(in srgb, var(--ink) calc(var(--rule-a) * 34%), transparent);
+  font-family: var(--ui);
+  background: var(--ground);
+}
+.stage[data-theme="t2"] :is(.meta, .time, .stime, .evt, .k, .pend, .c, kbd, .evn) {
+  font-family: var(--mono); font-size: calc(var(--f-1) * .78); letter-spacing: .02em;
+}
+.stage[data-theme="t2"] :is(.sechead, .ahead, .lead, .spinehead, .corner, .why, .trayhead b, .sdiv b) {
+  font-family: var(--mono); letter-spacing: .14em; font-weight: 400;
+}
+
+/* Crop marks: the sheet is trimmed, and the trim is visible. */
+.stage[data-theme="t2"] .win::before, .stage[data-theme="t2"] .win::after {
+  content: ""; position: absolute; z-index: 6; pointer-events: none;
+  width: 15px; height: 15px; opacity: .5;
+}
+.stage[data-theme="t2"] .win::before { top: 9px; right: 9px; border-top: 1px solid var(--ink-3); border-right: 1px solid var(--ink-3); }
+.stage[data-theme="t2"] .win::after { bottom: 9px; right: 9px; border-bottom: 1px solid var(--ink-3); border-right: 1px solid var(--ink-3); }
+
+.stage[data-theme="t2"] .side, .stage[data-theme="t2"] .spine { background: color-mix(in srgb, var(--ink) 3%, var(--ground)); border-right: 1px solid var(--keyline); }
+.stage[data-theme="t2"] .pane { background: var(--raised); }
+.stage[data-theme="t2"] :is(.composer, .inspector) { border-left: 1px solid var(--keyline); }
+.stage[data-theme="t2"] :is(.bar, .cmdbar) { border-bottom: 1px solid var(--keyline); }
+.stage[data-theme="t2"] :is(.dock, .statusline, .tray, .nextdue) { border-top: 1px solid var(--keyline); }
+.stage[data-theme="t2"] .ttl h1 { font-weight: 600; letter-spacing: -.012em; }
+.stage[data-theme="t2"] .ttl .sub { font-family: var(--mono); font-size: calc(var(--f-1) * .78); }
+
+.stage[data-theme="t2"] :is(.proj, .field, .btn, .verb, .card, .tcard, .vcard, .focus, .ev, .txt, .frame, .seg, .icobtn) {
+  box-shadow: inset 0 0 0 1px var(--keyline);
+}
+.stage[data-theme="t2"] :is(.row.card, .srow, .unrow, .lane) { box-shadow: none; }
+.stage[data-theme="t2"] :is(.row.card, .unrow) { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t2"] :is(.lrow, .arow, .scard, .ev, .tcard):hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.stage[data-theme="t2"] :is(.lrow, .scard).on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t2"] :is(.lrow, .scard).on .c { color: color-mix(in srgb, var(--ground) 66%, var(--ink)); }
+.stage[data-theme="t2"] .pmark { background: var(--ink); color: var(--ground); border-radius: 0; }
+
+.stage[data-theme="t2"] .av { border-radius: 0; background: var(--ink-3); color: var(--ground); }
+.stage[data-theme="t2"] .av[data-platform="instagram"] { background: #7a5a68; }
+.stage[data-theme="t2"] .av[data-platform="linkedin"] { background: #3d5a75; }
+.stage[data-theme="t2"] .av[data-platform="reddit"] { background: var(--accent); }
+.stage[data-theme="t2"] .av .dot { border-radius: 0; }
+
+.stage[data-theme="t2"] .seg button.on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t2"] .icobtn.acc { background: var(--accent); color: #fff; box-shadow: none; }
+.stage[data-theme="t2"] :is(.btn, .verb).pri { background: var(--ink); color: var(--ground); box-shadow: none; }
+.stage[data-theme="t2"] .verb.ghost { box-shadow: none; color: var(--ink-3); }
+.stage[data-theme="t2"] .k { color: var(--ink-3); }
+.stage[data-theme="t2"] .k.warn { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); padding: 1px 5px; }
+.stage[data-theme="t2"] .day, .stage[data-theme="t2"] .sdiv { background: var(--raised); border-bottom: 1px solid var(--keyline); }
+.stage[data-theme="t2"] .win[data-flow="stream"] .sdiv { background: var(--ground); }
+.stage[data-theme="t2"] .day h2 { font-family: var(--mono); font-weight: 400; letter-spacing: .1em; text-transform: uppercase; font-size: calc(var(--f-1) * .88); }
+
+.stage[data-theme="t2"][data-sel="rail"] [data-sel] { box-shadow: inset 2px 0 0 var(--accent), inset 0 0 0 1px var(--keyline); }
+.stage[data-theme="t2"][data-sel="fill"] [data-sel] { background: var(--acc-wash); }
+.stage[data-theme="t2"][data-sel="outline"] [data-sel] { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.stage[data-theme="t2"][data-sel="invert"] [data-sel] { background: var(--ink); }
+.stage[data-theme="t2"][data-sel="invert"] [data-sel] :is(.body, .h, .k, .time, .pgl, .evt, .evb) { color: var(--ground); }
+
+.stage[data-theme="t2"] .chip { border-radius: 0; box-shadow: inset 0 0 0 1px var(--keyline); }
+.stage[data-theme="t2"] .chip.on { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); }
+.stage[data-theme="t2"] .sched { border-radius: 0; background: var(--accent); color: #fff; }
+.stage[data-theme="t2"] .sched.ghost { background: none; color: var(--ink-3); box-shadow: inset 0 0 0 1px var(--keyline); }
+.stage[data-theme="t2"] .part.live .pdot { background: var(--accent); }
+.stage[data-theme="t2"] .pdot { border-radius: 0; }
+
+/* stream */
+.stage[data-theme="t2"] .cmd { background: var(--raised); border-radius: 0; }
+.stage[data-theme="t2"] .tok { border-radius: 0; }
+.stage[data-theme="t2"] .srowhead:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t2"] .srow.open { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+
+/* timeline */
+.stage[data-theme="t2"] .gridhead { background: var(--raised); border-bottom: 1px solid var(--ink-3); }
+.stage[data-theme="t2"] .lane { border-bottom: 1px solid var(--rule); }
+.stage[data-theme="t2"] .lanelab { border-right: 1px solid var(--keyline); background: var(--raised); }
+.stage[data-theme="t2"] .cell + .cell, .stage[data-theme="t2"] .dhead + .dhead { box-shadow: inset 1px 0 0 var(--rule); }
+.stage[data-theme="t2"] .cell.today { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.stage[data-theme="t2"] .dhead.today b { color: var(--accent); }
+.stage[data-theme="t2"] .ev { border-radius: 0; background: var(--raised); }
+.stage[data-theme="t2"] .ev[data-status="failed"] { box-shadow: inset 0 0 0 1px var(--accent); }
+.stage[data-theme="t2"] .tcard { border-radius: 0; background: var(--raised); }
+
+/* desk */
+.stage[data-theme="t2"] .vcard { border-radius: 0; background: var(--raised); }
+.stage[data-theme="t2"] .vhead { border-bottom: 1px solid var(--keyline); }
+.stage[data-theme="t2"] .vfoot { border-top: 1px solid var(--keyline); }
+.stage[data-theme="t2"] .todo .box { border-radius: 0; box-shadow: inset 0 0 0 1px var(--ink-3); }
+.stage[data-theme="t2"] .todo.done .box { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t2"] .idea h1 { font-weight: 600; letter-spacing: -.02em; }
+
+/* triage */
+.stage[data-theme="t2"] .focus { border-radius: 0; background: var(--raised); }
+.stage[data-theme="t2"] .why { color: var(--accent); }
+.stage[data-theme="t2"] .udot { border-radius: 0; }
+.stage[data-theme="t2"] .unrow:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.stage[data-theme="t2"] .progress { border-radius: 0; }
+
+/* library */
+.stage[data-theme="t2"] :is(.frame, .txt, .artbody, .pill, .edge, .fchip) { border-radius: 0; }
+.stage[data-theme="t2"] .txt { background: var(--raised); }
+.stage[data-theme="t2"] .txt.note { box-shadow: inset 0 0 0 1px var(--accent); }
+.stage[data-theme="t2"] .txt.note .lab { color: var(--accent); }
+.stage[data-theme="t2"] .artbody { box-shadow: inset 0 0 0 1px var(--keyline); border-top: 0; }
+.stage[data-theme="t2"] .edge { background: color-mix(in srgb, var(--ink) 12%, var(--raised)); box-shadow: inset 0 0 0 1px var(--keyline); }
+.stage[data-theme="t2"] .pill { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t2"] .playb { border-radius: 0; background: var(--ink); color: var(--ground); backdrop-filter: none; }
+.stage[data-theme="t2"] .scrim { background: linear-gradient(transparent, rgb(20 22 25 / .66)); }
+.stage[data-theme="t2"] .fchip { box-shadow: inset 0 0 0 1px var(--keyline); }
+.stage[data-theme="t2"] .fchip.on { background: var(--ink); color: var(--ground); }
+.stage[data-theme="t2"] .ph { background: repeating-linear-gradient(90deg, #c9ccce 0 1px, #dfe1e2 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="1"] { background: repeating-linear-gradient(90deg, #bfc4c7 0 1px, #d8dbdd 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="2"] { background: repeating-linear-gradient(90deg, #cfc6c9 0 1px, #e3dcde 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="3"] { background: repeating-linear-gradient(90deg, #c6cbc2 0 1px, #dee1da 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="4"] { background: repeating-linear-gradient(90deg, #c2cace 0 1px, #dbe0e3 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="5"] { background: repeating-linear-gradient(90deg, #cdc9c1 0 1px, #e2dfd9 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="6"] { background: repeating-linear-gradient(90deg, #c6c3ce 0 1px, #dedce3 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="7"] { background: repeating-linear-gradient(90deg, #cbc9bd 0 1px, #e1e0d7 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="8"] { background: repeating-linear-gradient(90deg, #c2cbc8 0 1px, #dbe1df 1px 3px); }
+.stage[data-theme="t2"] .ph[data-tone="9"] { background: repeating-linear-gradient(90deg, #c8c4cb 0 1px, #dfdce1 1px 3px); }
