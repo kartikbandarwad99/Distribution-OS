@@ -1,85 +1,116 @@
--- Distribution OS — hosted schema.
+-- Distribution OS — hosted schema, for D1 (SQLite).
 --
--- Deliberately not a port of the Tauri SQLite schema. The desktop app split
--- its truth between localStorage and SQLite and inner-joined a table that was
--- never populated; rebuilding on Postgres is the chance to not inherit that.
+-- Ported from the Postgres version. The shape was right and is unchanged: a
+-- post is written once and fans out to many accounts, so scheduling, state and
+-- failure live on `post_targets`, one row per account per post — never on the
+-- post itself.
 --
--- The shape that matters: a post is written once and fans out to many
--- accounts, so scheduling, state and failure live on `post_targets`, one row
--- per account per post — never on the post itself.
-
-create extension if not exists "pgcrypto";
+-- Only the Postgres-isms changed:
+--   * no pgcrypto; ids are `crypto.randomUUID()` from the Worker
+--   * timestamptz -> text holding ISO-8601 UTC. It sorts lexically in the same
+--     order it sorts chronologically, which is what makes `scheduled_at <= ?`
+--     correct. Every stored timestamp is UTC. There is no local time in this
+--     database.
+--   * text[] -> a JSON string column
+--   * partial indexes and check constraints port as-is
 
 create table if not exists projects (
-  id          uuid primary key default gen_random_uuid(),
+  id          text primary key,
   name        text not null,
-  created_at  timestamptz not null default now()
+  created_at  text not null
 );
 
 create table if not exists accounts (
-  id                uuid primary key default gen_random_uuid(),
-  project_id        uuid references projects(id) on delete set null,
+  id                text primary key,
+  project_id        text references projects(id) on delete set null,
   platform          text not null check (platform in ('instagram','threads','x','linkedin')),
   -- Instagram's user ID. This is the {ig-user-id} path parameter every
   -- publishing call needs, so it is resolved once at connect time and stored.
   external_id       text not null,
   handle            text,
   avatar_url        text,
-  -- AES-256-GCM, never returned to the browser. See api/_lib/crypto.ts.
+  -- AES-256-GCM, never returned to the browser. See worker/lib/crypto.ts.
   access_token_enc  text not null,
   refresh_token_enc text,
-  expires_at        timestamptz,
-  scopes            text[] not null default '{}',
+  expires_at        text,
+  -- JSON array. SQLite has no array type.
+  scopes            text not null default '[]',
   status            text not null default 'active'
                       check (status in ('active','expired','revoked')),
-  connected_at      timestamptz not null default now(),
+  connected_at      text not null,
   unique (platform, external_id)
 );
 
 create table if not exists posts (
-  id          uuid primary key default gen_random_uuid(),
-  project_id  uuid references projects(id) on delete cascade,
+  id          text primary key,
+  project_id  text references projects(id) on delete cascade,
   kind        text not null check (kind in ('image','carousel','reel','text')),
   caption     text not null default '',
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  created_at  text not null,
+  updated_at  text not null
 );
 
 -- Media lives in R2 only for its publish window; this table is the record of
 -- what was there. `evicted_at` is set when the object is deleted, which keeps
 -- the row meaningful as history after the bytes are gone.
 create table if not exists media (
-  id          uuid primary key default gen_random_uuid(),
-  post_id     uuid not null references posts(id) on delete cascade,
+  id          text primary key,
+  post_id     text not null references posts(id) on delete cascade,
   r2_key      text not null unique,
   mime        text not null,
-  bytes       bigint not null default 0,
-  position    int not null default 0,
+  bytes       integer not null default 0,
+  position    integer not null default 0,
   thumb_key   text,
-  evicted_at  timestamptz
+  evicted_at  text
 );
 
 create index if not exists media_post_idx on media (post_id, position);
 
 -- One row per (post, account). The unit of scheduling, publishing, retrying
--- and failure. `locked_at` is what stops two concurrent cron ticks from
--- publishing the same target twice.
+-- and failure.
+--
+-- `locked_at` is gone: the conditional-UPDATE publish lock it supported is no
+-- longer needed, because a Durable Object is single-threaded and one instance
+-- owns each account's queue. The columns that replaced it mirror the
+-- scheduler's progress so the UI can show it:
+--
+--   container_id        Meta's container, once created
+--   ig_media_id         the published media id, once media_publish returns
+--   publish_started_at  written BEFORE media_publish is called. This is the
+--                       at-least-once guard: if it is set and ig_media_id is
+--                       not, a previous attempt may already have posted, and
+--                       the target goes to `needs_review` rather than being
+--                       published again. See worker/scheduler.ts.
 create table if not exists post_targets (
-  id                uuid primary key default gen_random_uuid(),
-  post_id           uuid not null references posts(id) on delete cascade,
-  account_id        uuid not null references accounts(id) on delete cascade,
-  scheduled_at      timestamptz,
-  state             text not null default 'draft'
-                      check (state in ('draft','queued','publishing','published','failed')),
-  attempts          int not null default 0,
-  locked_at         timestamptz,
-  platform_post_id  text,
-  error             text,
-  published_at      timestamptz,
+  id                  text primary key,
+  post_id             text not null references posts(id) on delete cascade,
+  account_id          text not null references accounts(id) on delete cascade,
+  scheduled_at        text,
+  state               text not null default 'draft'
+                        check (state in ('draft','queued','creating','awaiting',
+                                         'publishing','published','failed',
+                                         'needs_review')),
+  attempts            integer not null default 0,
+  container_id        text,
+  ig_media_id         text,
+  publish_started_at  text,
+  platform_post_id    text,
+  error_reason        text,
+  published_at        text,
   unique (post_id, account_id)
 );
 
--- The scheduler's hot query: what is due, and not already being worked on.
+-- The sweep's hot query: what is due and still in flight. This index is a
+-- free-tier requirement, not an optimisation — D1 bills rows read, and an
+-- unindexed scan counts every row it touches. The state list here must stay in
+-- step with IN_FLIGHT_STATES in worker/lib/db.ts, or the sweep silently falls
+-- back to a full scan.
 create index if not exists post_targets_due_idx
   on post_targets (scheduled_at)
-  where state = 'queued';
+  where state in ('queued','creating','awaiting','publishing');
+
+-- The scheduler's other read: how many posts this account published in the
+-- last 24 hours, for the 25-per-rolling-day cap.
+create index if not exists post_targets_published_idx
+  on post_targets (account_id, published_at)
+  where state = 'published';

@@ -1,0 +1,73 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "distribution-os",
+  "main": "worker/index.ts",
+  // The newest date the installed workerd supports. Bump it with wrangler.
+  "compatibility_date": "2026-07-29",
+
+  // node:crypto, for the AES-256-GCM token encryption and the HMAC used by the
+  // session cookie and the signed media URLs. Keeping node:crypto rather than
+  // rewriting to WebCrypto is deliberate — see worker/lib/crypto.ts.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The Vite SPA, served by the platform without invoking the Worker.
+  // `run_worker_first` sends only /api/* to the script; everything else falls
+  // through to an asset, and anything unmatched returns index.html so client
+  // routing works on a hard refresh.
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "distribution-os",
+      // Filled in by `wrangler d1 create distribution-os`.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "distribution-os-media"
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ACCOUNT_SCHEDULER",
+        "class_name": "AccountScheduler"
+      }
+    ]
+  },
+
+  // SQLite-backed, because the free plan supports only SQLite-backed Durable
+  // Object classes. A key-value-backed class will not work.
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AccountScheduler"]
+    }
+  ],
+
+  "vars": {
+    // The deployed origin, no trailing slash. Not a secret; the Meta redirect
+    // URI is derived from it so the two can never drift.
+    "APP_URL": "https://example.com"
+  },
+
+  // The cron trigger is deliberately absent. It is step 10 of HANDOFF.md — the
+  // sweep goes on last, after the alarm path has been proven, so that a bug in
+  // the scheduler is not masked by a safety net.
+  //
+  // "triggers": { "crons": ["*/15 * * * *"] }
+
+  "observability": {
+    "enabled": true
+  }
+}
