@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import {
+  NavLink,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { useConfirm, usePrompt } from "../../components/Dialog";
 import { Avatar, Blank, HealthChip, SectionHead, chStyle } from "../../components/UI";
 import {
@@ -7,11 +12,14 @@ import {
   ConnectError,
   type OAuthResult,
   PLATFORM_SETUP,
+  SECOND_ACCOUNT_NOTE,
   adoptToken,
   connect,
   expiryStamp,
+  instagramConnectUrl,
   isTauri,
 } from "../../lib/connect";
+import { useServerAccounts } from "../../lib/accounts";
 import { Glyph, Icon } from "../../lib/glyphs";
 import {
   PLATFORM_LABEL,
@@ -134,17 +142,6 @@ function Channels() {
 
   return (
     <div className="setwrap">
-      {!isTauri && (
-        <p className="note">
-          <Icon.warn />
-          <span>
-            You are in the browser preview. Adding channels by hand works, but
-            connecting one needs the desktop app — there is no loopback listener
-            here to catch the redirect. Run <code>npm run app:dev</code>.
-          </span>
-        </p>
-      )}
-
       {error && (
         <p className="note">
           <Icon.warn />
@@ -236,6 +233,25 @@ function Channels() {
         )}
       </section>
 
+      {/* The hosted build has a public HTTPS callback, which is the one thing
+          the desktop app could never have. So on the web the whole
+          client-ID/paste-a-token apparatus below is not just unnecessary, it
+          is worse — it would put an app secret in a browser. */}
+      {isTauri ? <DesktopConnect /> : <WebConnect />}
+
+      {openSetup && (
+        <SetupPanel
+          platform={openSetup}
+          onClose={() => setOpenSetup(null)}
+        />
+      )}
+
+      {adding && <AddChannel onClose={() => setAdding(false)} />}
+    </div>
+  );
+
+  function DesktopConnect() {
+    return (
       <section>
         <SectionHead meta="automatic publishing">Connect an account</SectionHead>
         <div className="platgrid" style={{ marginTop: 12 }}>
@@ -313,16 +329,174 @@ function Channels() {
           })}
         </div>
       </section>
+    );
+  }
+}
 
-      {openSetup && (
-        <SetupPanel
-          platform={openSetup}
-          onClose={() => setOpenSetup(null)}
-        />
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONNECTING ON THE WEB
+   ═══════════════════════════════════════════════════════════════════════════
+
+   One link. Meta redirects the browser to the Worker's callback, which trades
+   the code for a sixty-day token and encrypts it before it reaches the
+   database. No client ID field, no pasted token, no secret in the browser —
+   all of which existed only because a desktop app has no public HTTPS URL.
+
+   Connecting is repeatable by design: `accounts` is keyed (platform,
+   external_id), so a second account inserts and a reconnect updates in place.
+   The part that needs saying out loud is that Meta reuses whatever Instagram
+   session the browser already has, which makes "Connect another" look broken
+   when it silently reconnects the same account.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WebConnect() {
+  const store = useStore();
+  const { accounts, loading, error, refresh } = useServerAccounts();
+  const [params, setParams] = useSearchParams();
+
+  const connected = params.get("connected");
+  const failure = params.get("ig_error");
+
+  /* The callback redirects back here with ?connected=<handle>. Pick it up,
+   * refetch so the new account appears without a reload, and clear the query
+   * so a refresh does not replay the banner forever. */
+  useEffect(() => {
+    if (!connected && !failure) return;
+    if (connected) refresh();
+    const timer = window.setTimeout(() => {
+      const next = new URLSearchParams(params);
+      next.delete("connected");
+      next.delete("ig_error");
+      setParams(next, { replace: true });
+    }, 6000);
+    return () => window.clearTimeout(timer);
+  }, [connected, failure, params, refresh, setParams]);
+
+  const instagram = accounts.filter((a) => a.platform === "instagram");
+
+  /* Grouped by project, because a second account usually means a second
+   * project rather than a spare. */
+  const byProject = new Map<string, typeof instagram>();
+  for (const account of instagram) {
+    const key = account.project_id ?? "__none";
+    byProject.set(key, [...(byProject.get(key) ?? []), account]);
+  }
+
+  const projectName = (id: string) =>
+    id === "__none"
+      ? "No project"
+      : (store.projects.find((p) => p.id === id)?.name ?? id);
+
+  return (
+    <section>
+      <SectionHead meta="automatic publishing">Connect an account</SectionHead>
+
+      {connected && (
+        <p className="note info" style={{ marginTop: 12 }}>
+          <Icon.check />
+          <span>
+            Connected <b>@{connected}</b>.
+          </span>
+        </p>
+      )}
+      {failure && (
+        <p className="note" style={{ marginTop: 12 }}>
+          <Icon.warn />
+          <span>{failure}</span>
+        </p>
+      )}
+      {error && (
+        <p className="note" style={{ marginTop: 12 }}>
+          <Icon.warn />
+          <span>{error}</span>
+        </p>
       )}
 
-      {adding && <AddChannel onClose={() => setAdding(false)} />}
-    </div>
+      {instagram.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          {[...byProject.entries()].map(([projectId, group]) => (
+            <div key={projectId} className="setgroup" style={{ marginBottom: 10 }}>
+              <div className="setrow" style={{ opacity: 0.7 }}>
+                <span className="rowname">
+                  <b>{projectName(projectId)}</b>
+                  <span>
+                    {group.length} account{group.length === 1 ? "" : "s"}
+                  </span>
+                </span>
+              </div>
+              {group.map((account) => (
+                <div className="setrow" key={account.id}>
+                  <span style={{ color: PLATFORM_TINT.instagram }}>
+                    <Glyph platform="instagram" tint />
+                  </span>
+                  <span className="rowname">
+                    <b>@{account.handle ?? account.external_id}</b>
+                    <span>
+                      {account.status === "active"
+                        ? account.expires_at
+                          ? `Token good until ${account.expires_at.slice(0, 10)}`
+                          : "Connected"
+                        : `Token ${account.status} — reconnect below`}
+                    </span>
+                  </span>
+                  <span className="rowctl">
+                    <span
+                      className={`hchip ${account.status === "active" ? "ok" : "bad"}`}
+                    >
+                      {account.status === "active" ? <Icon.check /> : <Icon.warn />}
+                      {account.status}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <article
+        className="platcard"
+        style={
+          {
+            marginTop: 12,
+            ["--ch"]: PLATFORM_TINT.instagram,
+          } as React.CSSProperties
+        }
+      >
+        <div className="pn">
+          <span style={{ color: PLATFORM_TINT.instagram }}>
+            <Glyph platform="instagram" tint />
+          </span>
+          <b>Instagram</b>
+          <span className="grow" />
+          {instagram.length > 0 && (
+            <span className="hchip ok">
+              <Icon.check /> {instagram.length}
+            </span>
+          )}
+        </div>
+        <p>
+          {instagram.length
+            ? SECOND_ACCOUNT_NOTE
+            : "Posts on your behalf. Your account must be a Business or Creator account."}
+        </p>
+        <footer>
+          <span className="grow" />
+          {/* An anchor, not a button with a fetch: the response is a 302 to
+              Meta and the browser has to follow it itself. */}
+          <a
+            className="btn pri"
+            href={instagramConnectUrl(store.project?.id ?? null)}
+          >
+            {loading
+              ? "Loading…"
+              : instagram.length
+                ? "Connect another"
+                : "Connect Instagram"}
+          </a>
+        </footer>
+      </article>
+    </section>
   );
 }
 

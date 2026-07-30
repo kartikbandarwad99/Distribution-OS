@@ -60,11 +60,28 @@ describe("signed tokens", () => {
     expect(readToken(secret, mintToken(secret, "session", -1))).toBeNull();
   });
 
+  /* Regression. The payload used to be percent-encoded, which leaves a dot a
+   * dot — so a media key ending in a filename produced a four-part token that
+   * failed its own three-part parse, and every signed media URL 403'd. Caught
+   * against a real `wrangler dev`, not by a test, because every fixture until
+   * then had a dotless key. */
+  it.each([
+    "get:posts/abc/00-shot.jpg",
+    "put:posts/abc/00-my.photo.final.jpeg",
+    "get:posts/abc/00-a b+c&d.jpg",
+    "get:posts/abc/00-café.jpg",
+  ])("round-trips %s, dots, spaces and all", (payload) => {
+    expect(readToken(secret, mintToken(secret, payload, 60))).toBe(payload);
+  });
+
   it("rejects a token whose payload was edited", () => {
     const token = mintToken(secret, "get:posts/mine.jpg", 60);
     const [, expiry, signature] = token.split(".");
-    expect(
-      readToken(secret, `${encodeURIComponent("get:posts/yours.jpg")}.${expiry}.${signature}`),
-    ).toBeNull();
+    // Swap in a different key, keeping the signature that was issued for the
+    // first one — the case that would let one signed URL read any object.
+    const forged = Buffer.from("get:posts/yours.jpg", "utf8").toString(
+      "base64url",
+    );
+    expect(readToken(secret, `${forged}.${expiry}.${signature}`)).toBeNull();
   });
 });

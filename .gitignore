@@ -23,3 +23,7 @@ web/.next
 web/node_modules
 .vercel
 .claude/
+
+# Local Worker secrets. Never committed.
+.dev.vars
+.wrangler/

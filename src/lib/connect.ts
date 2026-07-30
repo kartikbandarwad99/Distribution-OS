@@ -153,6 +153,35 @@ export const PLATFORM_SETUP: Partial<Record<Platform, PlatformSetup>> = {
 /** Platforms we can actually run an OAuth flow for today. */
 export const CONNECTABLE = Object.keys(PLATFORM_SETUP) as Platform[];
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE WEB PATH
+   ═══════════════════════════════════════════════════════════════════════════
+
+   Everything above describes a desktop app that has no public HTTPS callback.
+   The hosted build does have one, which removes the entire reason the
+   paste-a-token flow existed for Meta: the browser goes to Instagram, Meta
+   redirects to /api/auth/instagram/callback, and the Worker trades the code
+   for a sixty-day token and encrypts it before it touches the database. The
+   app secret never reaches the browser, and neither does the token.
+
+   The desktop path is kept rather than deleted — the Tauri app is the
+   reference implementation and still works. Every caller branches on
+   `isTauri`.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** Where "Connect Instagram" points on the web. A plain link, not a fetch:
+ *  the response is a redirect to Meta, and the browser must follow it. */
+export function instagramConnectUrl(projectId?: string | null): string {
+  const url = new URL("/api/auth/instagram/start", window.location.origin);
+  if (projectId) url.searchParams.set("project", projectId);
+  return url.toString();
+}
+
+/** Instagram's OAuth screen reuses whatever session the browser already has,
+ *  so connecting a second account looks broken unless this is said out loud. */
+export const SECOND_ACCOUNT_NOTE =
+  "Meta will reuse whichever Instagram account you are already logged into. To connect a different one, switch accounts inside Instagram (or open this in a private window) before continuing.";
+
 export class ConnectError extends Error {}
 
 /**
