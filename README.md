@@ -95,3 +95,27 @@ npm run worker:dev   # wrangler dev
 
 Not yet deployed: this needs a domain, a Cloudflare account, a D1 database, an
 R2 bucket and a Meta app. Steps 5–10 of HANDOFF.md cover that.
+
+### Running the hosted app locally
+
+`wrangler dev` serves the Worker and the built SPA together on one origin,
+which is the only way to exercise the API, the session cookie and the signed
+media URLs. Put local secrets in `.dev.vars` (gitignored — never commit it):
+
+```
+APP_PASSWORD=localdev
+TOKEN_ENC_KEY=<openssl rand -base64 32>
+INSTAGRAM_APP_ID=…
+INSTAGRAM_APP_SECRET=…
+APP_URL=http://localhost:8787
+```
+
+`APP_URL` there overrides the production placeholder in `wrangler.jsonc`, so
+the Meta redirect URI points at your local Worker.
+
+```bash
+npm run build && npm run db:apply:local && npm run worker:dev
+```
+
+`npm run dev` (Vite alone) still works for pure UI work, but there is no
+backend behind it, so the password screen is all you will see.

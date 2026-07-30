@@ -943,3 +943,45 @@ button.playb:hover { background: #fff; scale: 1.07; }
 .side .nextdue button:hover { color: var(--ink); }
 .linkish { color: var(--rubric); text-decoration: underline; text-underline-offset: 2px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   19 · SESSION GATE
+   The hosted build only. One password between the internet and a live
+   Instagram token, so it is a full-page stop rather than a dismissible bar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  padding: 24px;
+}
+
+.gatecard {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--card);
+  border-radius: var(--r-l);
+  box-shadow: var(--lift);
+  padding: 28px 24px;
+}
+
+.gatecard h1 {
+  font-family: var(--ui);
+  font-size: var(--f2);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.gatecard .sub {
+  font-size: var(--f-1);
+  color: var(--ink-3);
+  margin: -6px 0 4px;
+}
+
+.gatecard .btn { justify-content: center; }

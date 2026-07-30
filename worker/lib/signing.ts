@@ -21,15 +21,20 @@ export function safeEqual(a: string, b: string): boolean {
   );
 }
 
-/** `<payload>.<expiryEpochSeconds>.<signature>`. Self-describing, so nothing
- *  needs to be stored server-side to validate it. */
+/** `<payload>.<expiryEpochSeconds>.<signature>`.
+ *
+ *  The payload is base64url, not percent-encoded. That is not cosmetic: media
+ *  keys end in a filename, filenames contain a dot, and percent-encoding
+ *  leaves it there — so `00-shot.jpg` produced a four-part token that failed
+ *  its own three-part parse. base64url has no dot in its alphabet, so the
+ *  separator can never appear inside a field. */
 export function mintToken(
   secret: string,
   payload: string,
   ttlSeconds: number,
 ): string {
   const expiry = Math.floor(Date.now() / 1000) + ttlSeconds;
-  const body = `${encodeURIComponent(payload)}.${expiry}`;
+  const body = `${Buffer.from(payload, "utf8").toString("base64url")}.${expiry}`;
   return `${body}.${sign(secret, body)}`;
 }
 
@@ -45,5 +50,5 @@ export function readToken(secret: string, token: string): string | null {
   const expiresAt = Number(expiry);
   if (!Number.isFinite(expiresAt) || expiresAt * 1000 <= Date.now()) return null;
 
-  return decodeURIComponent(payload);
+  return Buffer.from(payload, "base64url").toString("utf8");
 }

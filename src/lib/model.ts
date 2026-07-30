@@ -151,8 +151,14 @@ export interface Channel {
   project: string | null;
   tint: string;
   connection: Connection;
-  /** Live token material. Never rendered; only its presence is shown. */
+  /** Live token material. Never rendered; only its presence is shown.
+   *  Always null on the web build: there the token lives encrypted in the
+   *  server's database and the browser never sees it. */
   auth: ChannelAuth | null;
+  /** The server's `accounts.id`, for channels connected through the hosted
+   *  OAuth flow. This is what publishing addresses; a hand-added or
+   *  desktop-connected channel has none. */
+  accountId?: string | null;
   followers: number;
   /** Posts per week you mean to do vs. what actually went out. */
   cadence: { target: number; actual: number };

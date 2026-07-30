@@ -22,6 +22,8 @@ import {
   type Slide,
 } from "../../lib/model";
 import { useStore } from "../../lib/store";
+import { isTauri } from "../../lib/connect";
+import { publishPieceNow, schedulePiece } from "../../lib/publishing";
 
 /*
  * The composer is the only place a piece is written, and it is deliberately
@@ -58,6 +60,10 @@ export function Composer({
   const fileInput = useRef<HTMLInputElement>(null);
   const dragFrom = useRef<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
+  /* Only the hosted build can hand a piece to the server. The desktop app
+   * keeps its existing behaviour exactly: move the column, fire a reminder. */
+  const [sending, setSending] = useState<null | "schedule" | "now">(null);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -76,6 +82,57 @@ export function Composer({
     () => (piece ? problems(piece, store.channels) : []),
     [piece, store.channels],
   );
+
+  /* Channels the server can actually publish to. A hand-added channel is a
+   * reminder, not a destination — it has no account behind it. */
+  const connectedTargets = useMemo(
+    () => (isTauri ? [] : targets.filter((c) => c.accountId)),
+    [targets],
+  );
+
+  /** Channels that still end in a reminder rather than a real publish. */
+  const reminderOnly = useMemo(
+    () =>
+      targets.filter(
+        (c) => RULES[c.platform].manualOnly && !connectedTargets.includes(c),
+      ),
+    [targets, connectedTargets],
+  );
+
+  /**
+   * Schedule and Publish now differ by one call. Both write the piece through
+   * to the server first — post, media bytes, one target per account — and both
+   * end in the same Durable Object running the same steps.
+   *
+   * The local column always moves, server or not, so the desktop build and a
+   * server hiccup both leave the board in the state the user just asked for.
+   */
+  async function send(mode: "schedule" | "now") {
+    if (!piece) return;
+    if (mode === "schedule") store.movePiece(piece.id, "scheduled");
+
+    if (isTauri || !connectedTargets.length) {
+      onClose();
+      return;
+    }
+
+    setSending(mode);
+    setSendError(null);
+    try {
+      if (mode === "schedule") {
+        await schedulePiece(piece, store.channels, store.assets);
+      } else {
+        await publishPieceNow(piece, store.channels, store.assets);
+      }
+      onClose();
+    } catch (caught) {
+      setSendError(
+        caught instanceof Error ? caught.message : "Could not reach the server.",
+      );
+    } finally {
+      setSending(null);
+    }
+  }
 
   if (!piece) return null;
 
@@ -508,12 +565,15 @@ export function Composer({
               </div>
             )}
 
-            {targets.some((c) => RULES[c.platform].manualOnly) && (
+            {/* A connected account on the hosted build no longer has this
+                problem: media is staged in R2 and Meta fetches it from a
+                signed URL. The warning is for the channels that really are
+                still reminders. */}
+            {reminderOnly.length > 0 && (
               <p className="note">
                 <Icon.warn />
                 <span>
-                  {targets
-                    .filter((c) => RULES[c.platform].manualOnly)
+                  {reminderOnly
                     .map((c) => PLATFORM_LABEL[c.platform])
                     .join(" and ")}{" "}
                   needs its image on a public URL — Meta fetches media rather
@@ -523,10 +583,27 @@ export function Composer({
                 </span>
               </p>
             )}
+
+            {connectedTargets.length > 0 && (
+              <p className="note info">
+                <Icon.check />
+                <span>
+                  Publishing to{" "}
+                  <b>{connectedTargets.map((c) => c.handle).join(", ")}</b> is
+                  automatic — the media is staged and Instagram fetches it at
+                  publish time.
+                </span>
+              </p>
+            )}
           </aside>
         </div>
 
         <footer className="modal-foot">
+          {sendError && (
+            <span className="hchip warn" title={sendError}>
+              <Icon.warn /> {sendError}
+            </span>
+          )}
           <span className="meta">
             {piece.scheduledFor
               ? `Goes out ${parseStamp(piece.scheduledFor).toLocaleString([], {
@@ -542,9 +619,25 @@ export function Composer({
           <button className="btn" onClick={onClose}>
             Done
           </button>
+
+          {/* Publishing straight away exists only where there is a server to
+              do it. On the desktop build a piece still becomes a reminder. */}
+          {!isTauri && connectedTargets.length > 0 && (
+            <button
+              className="btn"
+              disabled={found.length > 0 || sending !== null}
+              title={
+                found.length ? "Fix what's listed on the right first" : undefined
+              }
+              onClick={() => void send("now")}
+            >
+              {sending === "now" ? "Sending…" : "Publish now"}
+            </button>
+          )}
+
           <button
             className="btn pri"
-            disabled={found.length > 0 || !piece.scheduledFor}
+            disabled={found.length > 0 || !piece.scheduledFor || sending !== null}
             title={
               found.length
                 ? "Fix what's listed on the right first"
@@ -552,12 +645,9 @@ export function Composer({
                   ? "Pick a time first"
                   : undefined
             }
-            onClick={() => {
-              store.movePiece(piece.id, "scheduled");
-              onClose();
-            }}
+            onClick={() => void send("schedule")}
           >
-            Schedule
+            {sending === "schedule" ? "Scheduling…" : "Schedule"}
           </button>
         </footer>
       </section>

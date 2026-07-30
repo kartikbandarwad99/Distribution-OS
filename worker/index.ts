@@ -15,6 +15,7 @@ import * as instagramAuth from "./routes/instagram-auth.js";
 import * as media from "./routes/media.js";
 import * as publish from "./routes/publish.js";
 import * as accounts from "./routes/accounts.js";
+import * as posts from "./routes/posts.js";
 import { schedulerFor } from "./routes/publish.js";
 import { IN_FLIGHT_STATES, isoFromNow } from "./lib/db.js";
 
@@ -47,6 +48,9 @@ const ROUTES: Record<string, Handler> = {
   "GET /api/auth/instagram/callback": instagramAuth.callback,
 
   "GET /api/accounts": accounts.list,
+
+  "PUT /api/posts": posts.upsert,
+  "GET /api/targets": posts.listTargets,
 
   "POST /api/media/upload-url": media.uploadUrl,
   "PUT /api/media/upload": media.upload,

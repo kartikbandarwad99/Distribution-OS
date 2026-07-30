@@ -106,15 +106,22 @@ export async function fetchMedia(request: Request, env: Env): Promise<Response> 
   headers.set("etag", object.httpEtag);
   headers.set("cache-control", "private, no-store");
 
-  if (object.range && "offset" in object.range) {
+  // Gated on the REQUEST header, not on `object.range`: R2 populates
+  // `object.range` even for an unranged get, so keying off it answered every
+  // plain GET with a 206 and a full-body Content-Range. Meta's fetcher asks
+  // for the whole object and should be told 200.
+  if (range && object.range && "offset" in object.range) {
     const offset = object.range.offset ?? 0;
     const length = object.range.length ?? object.size - offset;
     headers.set(
       "content-range",
       `bytes ${offset}-${offset + length - 1}/${object.size}`,
     );
+    headers.set("content-length", String(length));
     return new Response(object.body, { status: 206, headers });
   }
 
+  headers.set("content-length", String(object.size));
+  headers.set("accept-ranges", "bytes");
   return new Response(object.body, { headers });
 }
