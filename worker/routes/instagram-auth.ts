@@ -13,7 +13,7 @@ import { randomBytes } from "node:crypto";
 import { config, instagramRedirectUri, type Env } from "../lib/env.js";
 import { encryptToken } from "../lib/crypto.js";
 import { json, redirect, readCookie, clearCookie } from "../lib/http.js";
-import { nowISO } from "../lib/db.js";
+import { nowISO, run } from "../lib/db.js";
 
 const SCOPES = ["instagram_business_basic", "instagram_business_content_publish"];
 
@@ -144,6 +144,22 @@ export async function callback(request: Request, env: Env): Promise<Response> {
 
   const externalId = String(profile.user_id ?? short.user_id);
   const expiresAt = new Date(Date.now() + long.expires_in * 1000).toISOString();
+
+  // Same on-demand project row as posts.upsert, and for the same reason: the
+  // frontend invents project ids locally, so `accounts.project_id` names a row
+  // the server has never seen and the foreign key rejects the insert. Without
+  // this the whole OAuth round trip succeeds and then throws away a live
+  // sixty-day token on the last statement.
+  if (projectId) {
+    await run(
+      env,
+      `INSERT INTO projects (id, name, created_at) VALUES (?, ?, ?)
+       ON CONFLICT (id) DO NOTHING`,
+      projectId,
+      projectId,
+      nowISO(),
+    );
+  }
 
   // Reconnecting an already-linked account refreshes it in place, so the
   // recovery path for an expired token is simply to connect again.

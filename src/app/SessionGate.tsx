@@ -17,6 +17,22 @@ import { Icon } from "../lib/glyphs";
 
 type State = "checking" | "in" | "out";
 
+/* Only a 401 means the password was wrong. Everything else is the server, and
+ * saying otherwise sends you hunting for a typo that isn't there — which is
+ * exactly what a frontend deployed without its backend did: /api/auth/login
+ * 404s, and the gate blamed the password. */
+function describe(caught: unknown): string {
+  if (!(caught instanceof ServerError)) {
+    return "Could not reach the server. Check your connection and try again.";
+  }
+  if (caught.kind === "config") return caught.message;
+  if (caught.status === 401) return "That password is not right.";
+  if (caught.status === 404) {
+    return "The API is not responding (404). The backend is not deployed at this address.";
+  }
+  return `The server could not sign you in (${caught.status}).`;
+}
+
 export function SessionGate({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(isTauri ? "in" : "checking");
   const [password, setPassword] = useState("");
@@ -49,11 +65,7 @@ export function SessionGate({ children }: { children: ReactNode }) {
         setPassword("");
         setState("in");
       } catch (caught) {
-        setError(
-          caught instanceof ServerError && caught.kind === "config"
-            ? caught.message
-            : "That password is not right.",
-        );
+        setError(describe(caught));
       } finally {
         setBusy(false);
       }
