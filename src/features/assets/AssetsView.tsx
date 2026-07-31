@@ -42,6 +42,7 @@ export function AssetsView({ onOpen }: { onOpen: (id: string) => void }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [playing, setPlaying] = useState<Asset | null>(null);
   const [dropping, setDropping] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const assets = store.scopedAssets;
   const selected = picked.length === 1
@@ -73,13 +74,23 @@ export function AssetsView({ onOpen }: { onOpen: (id: string) => void }) {
   /** The chosen files, kept in the order they appear on screen. */
   const pickedAssets = shown.filter((a) => picked.includes(a.id));
 
+  /* Every failure here was silent before: `void importFiles(...)` dropped the
+     rejection, so a browser refusing to store the bytes looked identical to
+     the picker doing nothing at all. */
   async function importFiles(files: File[]) {
     if (!files.length) return;
-    const made = await store.importFiles(
-      files,
-      folder === "all" ? "Unsorted" : folder,
-    );
-    setPicked(made.map((a) => a.id));
+    setImportError(null);
+    try {
+      const made = await store.importFiles(
+        files,
+        folder === "all" ? "Unsorted" : folder,
+      );
+      setPicked(made.map((a) => a.id));
+    } catch (caught: unknown) {
+      setImportError(
+        caught instanceof Error ? caught.message : "Could not import that file.",
+      );
+    }
   }
 
   /** Range-select with shift, add/remove with the platform modifier. */
@@ -149,6 +160,13 @@ export function AssetsView({ onOpen }: { onOpen: (id: string) => void }) {
           }}
         />
       </header>
+
+      {importError && (
+        <p className="note" style={{ margin: "10px 12px 0" }}>
+          <Icon.warn />
+          <span>{importError}</span>
+        </p>
+      )}
 
       <div
         className="withrail"

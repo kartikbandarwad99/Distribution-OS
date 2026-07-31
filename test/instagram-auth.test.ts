@@ -126,13 +126,19 @@ describe("the Instagram callback", () => {
   });
 });
 
-/* The account switch.
+/* What we are allowed to put on the authorize URL.
  *
- * Instagram's authorize screen reuses whatever session the browser holds, so
- * without `force_reauth` a second connect silently re-offers the account
- * already connected — which is indistinguishable from the button being
- * broken. These assert the parameter, because that one parameter is the whole
- * difference between "multi-account" and "one account forever".
+ * This used to assert `force_reauth=true` on a second connect, to get past
+ * Instagram's "continue as <already-connected account>" screen. That parameter
+ * does not exist. The documented list for this endpoint is client_id,
+ * redirect_uri, response_type, scope and state, and sending anything else
+ * broke the flow in production: Instagram abandoned the authorize step and
+ * left the user on their own feed, so no code ever reached the callback and
+ * connecting became impossible.
+ *
+ * The test now asserts the opposite, and asserts the whole parameter set
+ * rather than one name — an invented parameter is not a thing to check for
+ * individually, it is a thing to keep off the URL entirely.
  */
 describe("the Instagram connect start", () => {
   /* The start route is behind the session gate, unlike the callback — Meta
@@ -162,20 +168,31 @@ describe("the Instagram connect start", () => {
     );
   });
 
-  it("forces a fresh login when switching accounts", async () => {
+  /* The regression guard. `force_reauth` reached production and made the
+   * connect flow dead-end on the Instagram feed. */
+  it("never sends force_reauth, however the connect was started", async () => {
+    for (const query of ["", "?switch=1", "?switch=1&project=proj-42"]) {
+      const url = await authorizeUrl(query);
+      expect(url.searchParams.has("force_reauth")).toBe(false);
+    }
+  });
+
+  /* Stronger than checking known-bad names one at a time: anything not on
+   * Meta's documented list is assumed to break the flow until proven
+   * otherwise, because that is exactly how the last one behaved. */
+  it("sends only the five documented parameters", async () => {
     const url = await authorizeUrl("?switch=1");
-    expect(url.searchParams.get("force_reauth")).toBe("true");
+    expect([...url.searchParams.keys()].sort()).toEqual([
+      "client_id",
+      "redirect_uri",
+      "response_type",
+      "scope",
+      "state",
+    ]);
   });
 
-  /* Reconnecting an expiring token is the common case and must not demand a
-   * password — that friction is the reason force_reauth is opt-in. */
-  it("does not force a fresh login on a plain reconnect", async () => {
-    const url = await authorizeUrl("");
-    expect(url.searchParams.has("force_reauth")).toBe(false);
-  });
-
-  it("still carries the project through a switch", async () => {
-    const response = await start("?switch=1&project=proj-42");
+  it("still carries the project through to the callback", async () => {
+    const response = await start("?project=proj-42");
     expect(response.headers.get("set-cookie")).toContain("proj-42");
   });
 });
