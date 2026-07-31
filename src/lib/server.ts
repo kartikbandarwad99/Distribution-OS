@@ -84,6 +84,23 @@ export interface ServerAccount {
 export const listAccounts = () =>
   call<{ accounts: ServerAccount[] }>("/api/accounts");
 
+export interface DisconnectResult {
+  ok: true;
+  /** Set when the row had already gone — a double click, or two tabs. */
+  alreadyGone?: boolean;
+  handle?: string | null;
+  removedTargets?: number;
+  removedMetrics?: number;
+}
+
+/** Removes the connection and everything hanging off it, server-side and for
+ *  good. The caller must also drop the local channel: the server row is what
+ *  re-creates it on the next load, but the channel outlives this call. */
+export const disconnectAccount = (id: string) =>
+  call<DisconnectResult>(`/api/accounts?id=${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+
 /** The scope that carries analytics. An account connected before analytics
  *  existed will not have it, and no amount of retrying fixes that — the token
  *  has to be reissued. Kept next to ServerAccount because that is the only
