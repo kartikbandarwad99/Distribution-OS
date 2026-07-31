@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Avatar,
   Blank,
@@ -21,6 +21,9 @@ import {
   type Piece,
 } from "../../lib/model";
 import { useStore } from "../../lib/store";
+import { applyMetrics, useMetrics } from "../../lib/metrics";
+import { useServerAccounts } from "../../lib/accounts";
+import { canReadInsights } from "../../lib/server";
 
 /*
  * Analytics is the one screen with no right to invent anything. Every number
@@ -56,9 +59,70 @@ const rangeLabels = (range: Range) =>
       ? ["30d ago", "20d", "10d", "today"]
       : ["90d ago", "60d", "30d", "today"];
 
+/** Instagram is asked on the cron, not on page load — a chart must not wait on
+ *  Meta. This is the manual override for when you have just posted and want to
+ *  see it land. */
+function RefreshButton() {
+  const metrics = useMetrics();
+  const [busy, setBusy] = useState(false);
+
+  if (!metrics) return null;
+
+  return (
+    <button
+      className="btn"
+      disabled={busy}
+      onClick={() => {
+        setBusy(true);
+        void metrics.pull().finally(() => setBusy(false));
+      }}
+    >
+      {busy ? "Asking Instagram…" : "Refresh"}
+    </button>
+  );
+}
+
+/** The two things that make an empty analytics page explicable: an account
+ *  that predates the insights permission, and a fetch that failed. Both are
+ *  otherwise indistinguishable from "nothing has happened yet". */
+function MetricsNotice() {
+  const metrics = useMetrics();
+  const { accounts } = useServerAccounts();
+
+  const needsReconnect = accounts.filter(
+    (account) =>
+      account.platform === "instagram" &&
+      account.status === "active" &&
+      !canReadInsights(account),
+  );
+
+  if (metrics?.error) {
+    return (
+      <p className="anote">
+        <Icon.warn /> {metrics.error}
+      </p>
+    );
+  }
+
+  if (!needsReconnect.length) return null;
+
+  return (
+    <p className="anote">
+      <Icon.warn />{" "}
+      {needsReconnect.map((a) => `@${a.handle ?? a.external_id}`).join(", ")}{" "}
+      {needsReconnect.length === 1 ? "was" : "were"} connected before analytics
+      was available, so Instagram will not report numbers for{" "}
+      {needsReconnect.length === 1 ? "it" : "them"} yet. Reconnect in{" "}
+      <Link to="/settings/channels">Settings</Link> to grant the insights
+      permission — nothing is lost, and posting keeps working meanwhile.
+    </p>
+  );
+}
+
 export function AnalyticsView({ onOpen }: { onOpen: (id: string) => void }) {
   const { channelId } = useParams();
   const store = useStore();
+  const metrics = useMetrics();
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [view, setView] = useState<"overtime" | "cumulative">("overtime");
@@ -115,7 +179,7 @@ export function AnalyticsView({ onOpen }: { onOpen: (id: string) => void }) {
     );
   }
 
-  const published = store.scopedPieces.filter(
+  const published = applyMetrics(store.scopedPieces, metrics?.byPiece).filter(
     (p) => p.col === "published" && p.metrics,
   );
 
@@ -154,6 +218,7 @@ export function AnalyticsView({ onOpen }: { onOpen: (id: string) => void }) {
           </div>
         </div>
         <span className="grow" />
+        <RefreshButton />
         <Seg
           items={[
             { id: "overtime", label: "Over time" },
@@ -174,6 +239,7 @@ export function AnalyticsView({ onOpen }: { onOpen: (id: string) => void }) {
 
       <div className="scroll">
         <FilterRail value={filter} onChange={setFilter} />
+        <MetricsNotice />
 
         <div className="anhead">
           <div className="totals">
@@ -358,6 +424,7 @@ function PostTable({
         <span />
         <span>Piece</span>
         <span className="n">Reach</span>
+        <span className="n">Views</span>
         <span className="n">Likes</span>
         <span className="n">Comments</span>
         <span className="n">Shares</span>
@@ -393,6 +460,7 @@ function PostTable({
               </span>
             </span>
             <span className="n">{fmt(m.reach)}</span>
+            <span className="n">{fmt(m.views)}</span>
             <span className="n">{fmt(m.likes)}</span>
             <span className="n">{m.comments}</span>
             <span className="n">{m.shares}</span>
@@ -425,14 +493,15 @@ function OneChannel({
   onOpen: (id: string) => void;
 }) {
   const store = useStore();
+  const metrics = useMetrics();
   const navigate = useNavigate();
 
   const mine = useMemo(
     () =>
-      store.pieces.filter(
+      applyMetrics(store.pieces, metrics?.byPiece).filter(
         (p) => p.channels.includes(channel.id) && p.col === "published",
       ),
-    [store.pieces, channel.id],
+    [store.pieces, channel.id, metrics?.byPiece],
   );
   const withMetrics = mine.filter((p) => p.metrics);
   const queued = store.pieces.filter(

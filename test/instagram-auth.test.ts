@@ -125,3 +125,57 @@ describe("the Instagram callback", () => {
     expect(account).toBeNull();
   });
 });
+
+/* The account switch.
+ *
+ * Instagram's authorize screen reuses whatever session the browser holds, so
+ * without `force_reauth` a second connect silently re-offers the account
+ * already connected — which is indistinguishable from the button being
+ * broken. These assert the parameter, because that one parameter is the whole
+ * difference between "multi-account" and "one account forever".
+ */
+describe("the Instagram connect start", () => {
+  /* The start route is behind the session gate, unlike the callback — Meta
+   * redirects the browser into the callback with no cookie, but nothing
+   * outside the app should be able to begin a connect. */
+  const start = async (query: string) => {
+    const login = await SELF.fetch("https://test.example.com/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ password: "correct-horse-battery-staple" }),
+    });
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    return SELF.fetch(
+      `https://test.example.com/api/auth/instagram/start${query}`,
+      { headers: { cookie }, redirect: "manual" },
+    );
+  };
+
+  const authorizeUrl = async (query: string) => {
+    const response = await start(query);
+    return new URL(response.headers.get("location")!);
+  };
+
+  it("asks for the insights scope", async () => {
+    const url = await authorizeUrl("");
+    expect(url.searchParams.get("scope")).toContain(
+      "instagram_business_manage_insights",
+    );
+  });
+
+  it("forces a fresh login when switching accounts", async () => {
+    const url = await authorizeUrl("?switch=1");
+    expect(url.searchParams.get("force_reauth")).toBe("true");
+  });
+
+  /* Reconnecting an expiring token is the common case and must not demand a
+   * password — that friction is the reason force_reauth is opt-in. */
+  it("does not force a fresh login on a plain reconnect", async () => {
+    const url = await authorizeUrl("");
+    expect(url.searchParams.has("force_reauth")).toBe(false);
+  });
+
+  it("still carries the project through a switch", async () => {
+    const response = await start("?switch=1&project=proj-42");
+    expect(response.headers.get("set-cookie")).toContain("proj-42");
+  });
+});

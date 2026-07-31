@@ -84,6 +84,50 @@ export interface ServerAccount {
 export const listAccounts = () =>
   call<{ accounts: ServerAccount[] }>("/api/accounts");
 
+/** The scope that carries analytics. An account connected before analytics
+ *  existed will not have it, and no amount of retrying fixes that — the token
+ *  has to be reissued. Kept next to ServerAccount because that is the only
+ *  place the check is ever made. */
+export const INSIGHTS_SCOPE = "instagram_business_manage_insights";
+
+export const canReadInsights = (account: ServerAccount): boolean =>
+  account.scopes.includes(INSIGHTS_SCOPE);
+
+/* ── metrics ───────────────────────────────────────────────────────────── */
+
+/** One reading. Every number is nullable: Instagram does not report the same
+ *  metrics for every media type, and absent must stay distinguishable from
+ *  zero all the way to the chart. */
+export interface ServerMetric {
+  target_id: string;
+  post_id: string;
+  account_id: string;
+  ig_media_id: string;
+  fetched_at: string;
+  reach: number | null;
+  views: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  saved: number | null;
+}
+
+export const listMetrics = (postId?: string) =>
+  call<{ metrics: ServerMetric[] }>(
+    postId ? `/api/metrics?postId=${encodeURIComponent(postId)}` : "/api/metrics",
+  );
+
+export interface RefreshResult {
+  considered: number;
+  updated: number;
+  /** The batch filled up; there is more to fetch on the next call. */
+  more: boolean;
+  problems: Array<{ accountId: string; handle: string | null; reason: string }>;
+}
+
+export const refreshMetrics = (options: { accountId?: string; force?: boolean } = {}) =>
+  call<RefreshResult>("/api/metrics/refresh", { method: "POST", json: options });
+
 /* ── posts, media, publishing ──────────────────────────────────────────── */
 
 export interface ServerTarget {

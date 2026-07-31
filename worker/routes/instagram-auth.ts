@@ -15,7 +15,20 @@ import { encryptToken } from "../lib/crypto.js";
 import { json, redirect, readCookie, clearCookie } from "../lib/http.js";
 import { nowISO, run } from "../lib/db.js";
 
-const SCOPES = ["instagram_business_basic", "instagram_business_content_publish"];
+/* Scopes are baked into the token at issue and cannot be widened afterwards,
+ * so adding one here means every already-connected account must run the flow
+ * again. Settings detects that from `accounts.scopes` and asks for it, rather
+ * than letting the insights fetch fail with an opaque permission error. */
+const SCOPES = [
+  "instagram_business_basic",
+  "instagram_business_content_publish",
+  // Reading reach/views/saves/shares back off published media.
+  "instagram_business_manage_insights",
+];
+
+/** The one scope that is not needed to publish. Named here because Settings
+ *  and the metrics route both have to ask whether an account carries it. */
+export const INSIGHTS_SCOPE = "instagram_business_manage_insights";
 
 interface ShortLivedToken {
   access_token: string;
@@ -40,9 +53,23 @@ export function start(request: Request, env: Env): Response {
   url.searchParams.set("scope", SCOPES.join(","));
   url.searchParams.set("state", state);
 
+  const incoming = new URL(request.url).searchParams;
+
+  /* Without this, Instagram reuses whatever session the browser already holds
+   * and shows "continue sharing to <app>?" for the account already connected —
+   * which makes "Connect another account" look broken, because it silently
+   * reconnects the same one. `force_reauth` forces the login screen so a
+   * different account can be chosen.
+   *
+   * Only set when asked. Reconnecting an expiring token is the common case and
+   * should not demand a password. */
+  if (incoming.get("switch") === "1") {
+    url.searchParams.set("force_reauth", "true");
+  }
+
   // `project` survives the round trip so the account lands in the right
   // project without a second step once multi-project fan-out exists.
-  const project = new URL(request.url).searchParams.get("project") ?? "";
+  const project = incoming.get("project") ?? "";
 
   const response = redirect(url.toString());
   response.headers.append(
@@ -54,6 +81,19 @@ export function start(request: Request, env: Env): Response {
     `ig_oauth_project=${encodeURIComponent(project)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`,
   );
   return response;
+}
+
+/** Meta's denial text is accurate and useless. The one case worth translating
+ *  is the commonest reason a connect fails: a personal account. Instagram
+ *  Login will not issue `instagram_business_*` scopes to one, and the raw
+ *  message never says so — it reads like a bug in the app. */
+function explain(denial: string): string {
+  const personal = /not.*(business|professional)|professional account/i.test(
+    denial,
+  );
+  return personal
+    ? "Instagram only allows posting and analytics from a Professional account. Open Instagram → Settings → Account type and switch to Creator or Business (it is free, instant, and reversible), then connect again."
+    : denial;
 }
 
 /** Step two: trade the code for a token that lasts.
@@ -69,7 +109,7 @@ export async function callback(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const denial = params.get("error_description");
   if (denial) {
-    return redirect(`/settings?ig_error=${encodeURIComponent(denial)}`);
+    return redirect(`/settings?ig_error=${encodeURIComponent(explain(denial))}`);
   }
 
   const code = params.get("code");

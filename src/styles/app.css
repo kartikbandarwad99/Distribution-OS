@@ -601,7 +601,7 @@ h2 { font-size: var(--f1); font-weight: 500; }
 .chhero { display: flex; align-items: center; gap: 14px; padding: 22px 22px 16px; border-bottom: 1px solid var(--rule); }
 .chstats { display: flex; gap: 26px; }
 .postrow {
-  display: grid; grid-template-columns: 34px minmax(0, 1fr) repeat(5, 62px) 66px; align-items: center;
+  display: grid; grid-template-columns: 34px minmax(0, 1fr) repeat(6, 62px) 66px; align-items: center;
   gap: 10px; width: 100%; padding: 9px 12px; border-radius: var(--r); font-size: var(--f-1);
 }
 .postrow:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
