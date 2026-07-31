@@ -45,8 +45,40 @@ function tx<T>(
   );
 }
 
+/** Thrown when the bytes could not be stored, carrying a sentence worth
+ *  showing. Import used to reject with a raw DOMException that nothing caught,
+ *  so a failed import looked exactly like a no-op: file picked, nothing added,
+ *  nothing said. */
+export class StorageError extends Error {}
+
+/* The failures worth translating. Safari in Private Browsing gives IndexedDB a
+ * tiny ephemeral quota and refuses writes past it, and it is the one case where
+ * the app is working perfectly and the browser is the answer — so it is named,
+ * rather than reported as an unspecified failure the user cannot act on. */
+function explainStorage(error: unknown): StorageError {
+  const name = error instanceof DOMException ? error.name : "";
+
+  if (name === "QuotaExceededError") {
+    return new StorageError(
+      "There is no room to store this file. Safari Private Browsing allows very little, so try a normal window; otherwise free up space by deleting some assets.",
+    );
+  }
+  if (name === "SecurityError" || name === "InvalidStateError") {
+    return new StorageError(
+      "This browser is not allowing local storage, which is where imported files are kept. Private Browsing and blocked-cookie settings both do this — try a normal window.",
+    );
+  }
+  return new StorageError(
+    error instanceof Error && error.message
+      ? `Could not store the file: ${error.message}`
+      : "Could not store the file.",
+  );
+}
+
 export const putBlob = (id: string, blob: Blob): Promise<unknown> =>
-  tx("readwrite", (store) => store.put(blob, id));
+  tx("readwrite", (store) => store.put(blob, id)).catch((error: unknown) => {
+    throw explainStorage(error);
+  });
 
 export const getBlob = (id: string): Promise<Blob | undefined> =>
   tx("readonly", (store) => store.get(id));

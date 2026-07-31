@@ -55,17 +55,22 @@ export function start(request: Request, env: Env): Response {
 
   const incoming = new URL(request.url).searchParams;
 
-  /* Without this, Instagram reuses whatever session the browser already holds
-   * and shows "continue sharing to <app>?" for the account already connected —
-   * which makes "Connect another account" look broken, because it silently
-   * reconnects the same one. `force_reauth` forces the login screen so a
-   * different account can be chosen.
+  /* No `force_reauth` here, and nothing else that claims to switch accounts.
    *
-   * Only set when asked. Reconnecting an expiring token is the common case and
-   * should not demand a password. */
-  if (incoming.get("switch") === "1") {
-    url.searchParams.set("force_reauth", "true");
-  }
+   * It was added to get past Instagram's "continue as <already-connected
+   * account>" screen, on the assumption that the parameter existed. It does
+   * not: the documented query parameters for this endpoint are client_id,
+   * redirect_uri, response_type, scope and state, and that is the whole list.
+   * Sending an unrecognised one broke the flow — Instagram dropped out of the
+   * authorize step and left the user sitting on their own feed, with no code
+   * ever reaching the callback.
+   *
+   * `switch` is still accepted and still means "I want a different account",
+   * but it is now handled where it can actually be handled: the UI says to
+   * sign out of instagram.com first, because a browser-side session is the
+   * only thing that decides which account this screen offers. There is no
+   * server-side way to override it. See SWITCH_ACCOUNT_NOTE in
+   * src/lib/connect.ts. */
 
   // `project` survives the round trip so the account lands in the right
   // project without a second step once multi-project fan-out exists.

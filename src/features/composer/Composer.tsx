@@ -58,6 +58,7 @@ export function Composer({
   const piece = store.pieces.find((p) => p.id === pieceId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const dragFrom = useRef<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
   /* Only the hosted build can hand a piece to the server. The desktop app
@@ -406,6 +407,12 @@ export function Composer({
                   >
                     <Icon.image /> Import from disk
                   </button>
+                  {importError && (
+                    <p className="note" style={{ marginTop: 10 }}>
+                      <Icon.warn />
+                      <span>{importError}</span>
+                    </p>
+                  )}
                   <input
                     ref={fileInput}
                     type="file"
@@ -416,8 +423,20 @@ export function Composer({
                       const files = Array.from(e.target.files ?? []);
                       e.target.value = "";
                       if (!files.length) return;
-                      const made = await store.importFiles(files);
-                      addSlides(made.map((a) => a.id));
+                      // Same silent-failure trap as the Assets importer: a
+                      // browser that refuses to store the bytes must not look
+                      // like a picker that did nothing.
+                      setImportError(null);
+                      try {
+                        const made = await store.importFiles(files);
+                        addSlides(made.map((a) => a.id));
+                      } catch (caught: unknown) {
+                        setImportError(
+                          caught instanceof Error
+                            ? caught.message
+                            : "Could not import that file.",
+                        );
+                      }
                     }}
                   />
                 </div>

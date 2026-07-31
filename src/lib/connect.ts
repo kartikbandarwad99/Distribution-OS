@@ -171,24 +171,23 @@ export const CONNECTABLE = Object.keys(PLATFORM_SETUP) as Platform[];
 
 /** Where "Connect Instagram" points on the web. A plain link, not a fetch:
  *  the response is a redirect to Meta, and the browser must follow it. */
-export function instagramConnectUrl(
-  projectId?: string | null,
-  options: { switchAccount?: boolean } = {},
-): string {
+export function instagramConnectUrl(projectId?: string | null): string {
   const url = new URL("/api/auth/instagram/start", window.location.origin);
   if (projectId) url.searchParams.set("project", projectId);
-  /* Makes the Worker set `force_reauth`, which is the only way past
-   * Instagram's "continue as <already-connected account>" screen. Not set for
-   * a plain reconnect, where re-entering a password would be pure friction. */
-  if (options.switchAccount) url.searchParams.set("switch", "1");
+  /* There is no "switch account" parameter to add here. Connecting a second
+   * account and reconnecting an existing one produce the identical URL; the
+   * browser's instagram.com session is the only thing that differs. */
   return url.toString();
 }
 
-/** Said out loud because `force_reauth` trades one surprise for another: the
- *  old behaviour silently reconnected the same account, and the new one asks
- *  for a password even when you are already logged in. */
+/** Which account Instagram offers is decided entirely by the session in the
+ *  browser, and the authorize endpoint takes no parameter that overrides it —
+ *  client_id, redirect_uri, response_type, scope and state are the documented
+ *  list. So this is an instruction rather than a button: there is nothing the
+ *  app can do on the user's behalf, and pretending otherwise is what sent
+ *  people to their own feed instead of back here. */
 export const SECOND_ACCOUNT_NOTE =
-  "Connecting another account signs you out of Instagram's authorization screen so you can choose a different one — you will need that account's password. Reconnecting an existing account below does not.";
+  "Instagram will offer whichever account is signed in to instagram.com in this browser. To connect a different one, sign out of instagram.com first (or use a separate browser profile), then come back and connect.";
 
 /** Said out loud because the app cannot do it. Instagram Business Login has no
  *  token revocation endpoint, so disconnecting here deletes our copy of the

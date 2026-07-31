@@ -476,8 +476,6 @@ function WebConnect() {
                             : "no analytics"
                           : account.status}
                       </span>
-                      {/* Deliberately not force_reauth: this is the same
-                          account, and it is already logged in. */}
                       <a
                         className="btn"
                         href={instagramConnectUrl(account.project_id)}
@@ -566,11 +564,7 @@ function WebConnect() {
               Meta and the browser has to follow it itself. */}
           <a
             className="btn pri"
-            href={instagramConnectUrl(store.project?.id ?? null, {
-              // Only when adding to an existing set. The first connect has no
-              // session to force past.
-              switchAccount: instagram.length > 0,
-            })}
+            href={instagramConnectUrl(store.project?.id ?? null)}
           >
             {loading
               ? "Loading…"
