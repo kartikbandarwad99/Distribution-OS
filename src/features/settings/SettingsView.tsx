@@ -20,6 +20,7 @@ import {
   isTauri,
 } from "../../lib/connect";
 import { useServerAccounts } from "../../lib/accounts";
+import { canReadInsights } from "../../lib/server";
 import { Glyph, Icon } from "../../lib/glyphs";
 import {
   PLATFORM_LABEL,
@@ -424,31 +425,57 @@ function WebConnect() {
                   </span>
                 </span>
               </div>
-              {group.map((account) => (
-                <div className="setrow" key={account.id}>
-                  <span style={{ color: PLATFORM_TINT.instagram }}>
-                    <Glyph platform="instagram" tint />
-                  </span>
-                  <span className="rowname">
-                    <b>@{account.handle ?? account.external_id}</b>
-                    <span>
-                      {account.status === "active"
-                        ? account.expires_at
-                          ? `Token good until ${account.expires_at.slice(0, 10)}`
-                          : "Connected"
-                        : `Token ${account.status} — reconnect below`}
+              {group.map((account) => {
+                /* Scopes are fixed at issue, so an account connected before
+                 * analytics existed can never read insights without going
+                 * through the flow again. Saying so here is the difference
+                 * between a one-click fix and an analytics page that is
+                 * permanently and inexplicably empty. */
+                const insights = canReadInsights(account);
+                return (
+                  <div className="setrow" key={account.id}>
+                    <span style={{ color: PLATFORM_TINT.instagram }}>
+                      <Glyph platform="instagram" tint />
                     </span>
-                  </span>
-                  <span className="rowctl">
-                    <span
-                      className={`hchip ${account.status === "active" ? "ok" : "bad"}`}
-                    >
-                      {account.status === "active" ? <Icon.check /> : <Icon.warn />}
-                      {account.status}
+                    <span className="rowname">
+                      <b>@{account.handle ?? account.external_id}</b>
+                      <span>
+                        {account.status !== "active"
+                          ? `Token ${account.status} — reconnect to resume posting`
+                          : !insights
+                            ? "Connected for posting. Reconnect to enable analytics."
+                            : account.expires_at
+                              ? `Token good until ${account.expires_at.slice(0, 10)}`
+                              : "Connected"}
+                      </span>
                     </span>
-                  </span>
-                </div>
-              ))}
+                    <span className="rowctl">
+                      <span
+                        className={`hchip ${account.status === "active" && insights ? "ok" : "bad"}`}
+                      >
+                        {account.status === "active" && insights ? (
+                          <Icon.check />
+                        ) : (
+                          <Icon.warn />
+                        )}
+                        {account.status === "active"
+                          ? insights
+                            ? "active"
+                            : "no analytics"
+                          : account.status}
+                      </span>
+                      {/* Deliberately not force_reauth: this is the same
+                          account, and it is already logged in. */}
+                      <a
+                        className="btn"
+                        href={instagramConnectUrl(account.project_id)}
+                      >
+                        Reconnect
+                      </a>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -486,12 +513,16 @@ function WebConnect() {
               Meta and the browser has to follow it itself. */}
           <a
             className="btn pri"
-            href={instagramConnectUrl(store.project?.id ?? null)}
+            href={instagramConnectUrl(store.project?.id ?? null, {
+              // Only when adding to an existing set. The first connect has no
+              // session to force past.
+              switchAccount: instagram.length > 0,
+            })}
           >
             {loading
               ? "Loading…"
               : instagram.length
-                ? "Connect another"
+                ? "Connect another account"
                 : "Connect Instagram"}
           </a>
         </footer>

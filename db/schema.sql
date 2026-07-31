@@ -114,3 +114,43 @@ create index if not exists post_targets_due_idx
 create index if not exists post_targets_published_idx
   on post_targets (account_id, published_at)
   where state = 'published';
+
+-- What Instagram reported about a published post, over time.
+--
+-- Append-only, one row per fetch, rather than a `metrics` column on
+-- post_targets. Reach and views keep moving for days after publication; an
+-- overwriting column would answer "how is this doing now" and permanently
+-- destroy "how did it get there", which is the more interesting question and
+-- the one that cannot be reconstructed later.
+--
+-- `raw` holds Meta's payload verbatim alongside the normalised columns. Meta
+-- churns metric names hard — `impressions` gave way to `views`, `video_views`
+-- and `profile_views` were removed outright — and without `raw` every rename
+-- is a migration that silently drops the history it cannot map. With it, a
+-- renamed metric is a read-side change.
+--
+-- The normalised columns are nullable on purpose: a metric that Instagram does
+-- not support for that media type is absent, which is not the same as zero and
+-- must not be charted as zero.
+create table if not exists post_metrics (
+  id           text primary key,
+  target_id    text not null references post_targets(id) on delete cascade,
+  account_id   text not null references accounts(id) on delete cascade,
+  -- Denormalised from post_targets so a fetch needs no join, and so the row
+  -- stays meaningful if the target is ever repointed.
+  ig_media_id  text not null,
+  fetched_at   text not null,
+  reach        integer,
+  views        integer,
+  likes        integer,
+  comments     integer,
+  shares       integer,
+  saved        integer,
+  raw          text not null default '{}',
+  unique (target_id, fetched_at)
+);
+
+-- Both reads this table has: "the latest numbers for these targets" and "the
+-- series for this target", which are the same index walked two ways.
+create index if not exists post_metrics_target_idx
+  on post_metrics (target_id, fetched_at desc);

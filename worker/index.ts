@@ -16,12 +16,13 @@ import * as media from "./routes/media.js";
 import * as publish from "./routes/publish.js";
 import * as accounts from "./routes/accounts.js";
 import * as posts from "./routes/posts.js";
+import * as metrics from "./routes/metrics.js";
 import { schedulerFor } from "./routes/publish.js";
 import { IN_FLIGHT_STATES, isoFromNow } from "./lib/db.js";
 
 export { AccountScheduler } from "./scheduler.js";
 
-/** A route is `METHOD /path`, matched exactly. There are eleven of them; a
+/** A route is `METHOD /path`, matched exactly. There are thirteen of them; a
  *  router library would be more code than the routes. */
 type Handler = (request: Request, env: Env) => Response | Promise<Response>;
 
@@ -55,6 +56,9 @@ const ROUTES: Record<string, Handler> = {
   "POST /api/media/upload-url": media.uploadUrl,
   "PUT /api/media/upload": media.upload,
   "GET /api/media/fetch": media.fetchMedia,
+
+  "GET /api/metrics": metrics.list,
+  "POST /api/metrics/refresh": metrics.refresh,
 
   "POST /api/publish": publish.publishNow,
   "POST /api/schedule": publish.schedule,
@@ -127,6 +131,17 @@ export default {
       for (const accountId of accountIds) {
         await schedulerFor(env, accountId).poke(accountId);
       }
+
+      /* Metrics refresh rides the same cron rather than getting one of its
+       * own. It runs after the re-arm, and last, because it is the part that
+       * may spend the whole external-subrequest budget — publishing recovery
+       * must not be starved by a chart being out of date.
+       *
+       * Its own failures are swallowed here for the same reason: Instagram
+       * being unreachable is a normal condition and must not abort the sweep. */
+      await metrics.refreshDue(env).catch((error: unknown) => {
+        console.error("metrics refresh failed", error);
+      });
     } catch (error) {
       // A misconfigured environment must not turn into a cron that fails
       // silently forever with no clue in the log.

@@ -189,11 +189,16 @@ export interface Slide {
     we never invent these; an empty analytics page is the honest one. */
 export interface Metrics {
   reach: number;
-  impressions: number;
+  /** Instagram's replacement for `impressions`, which Meta deprecated for
+   *  media. This is the field real data lands in. */
+  views: number;
   likes: number;
   comments: number;
   shares: number;
   saves: number;
+  /** Legacy. Only ever set by locally-seeded pieces from before `views`
+   *  existed; the API never returns it and nothing new should write it. */
+  impressions?: number;
 }
 
 export interface Piece {
