@@ -22,7 +22,8 @@ import { IN_FLIGHT_STATES, isoFromNow } from "./lib/db.js";
 
 export { AccountScheduler } from "./scheduler.js";
 
-/** A route is `METHOD /path`, matched exactly. There are thirteen of them; a
+/** A route is `METHOD /path`, matched exactly — there are no path parameters,
+ *  so a route that addresses one row takes its id from the query string. A
  *  router library would be more code than the routes. */
 type Handler = (request: Request, env: Env) => Response | Promise<Response>;
 
@@ -49,6 +50,7 @@ const ROUTES: Record<string, Handler> = {
   "GET /api/auth/instagram/callback": instagramAuth.callback,
 
   "GET /api/accounts": accounts.list,
+  "DELETE /api/accounts": accounts.remove,
 
   "PUT /api/posts": posts.upsert,
   "GET /api/targets": posts.listTargets,

@@ -12,6 +12,7 @@ import {
   ConnectError,
   type OAuthResult,
   PLATFORM_SETUP,
+  DISCONNECT_NOTE,
   SECOND_ACCOUNT_NOTE,
   adoptToken,
   connect,
@@ -352,8 +353,13 @@ function Channels() {
 
 function WebConnect() {
   const store = useStore();
-  const { accounts, loading, error, refresh } = useServerAccounts();
+  const { accounts, loading, error, refresh, disconnect } = useServerAccounts();
   const [params, setParams] = useSearchParams();
+  const confirm = useConfirm();
+  /** The account currently being removed, so its own button can say so
+   *  without disabling every other row's. */
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
 
   const connected = params.get("connected");
   const failure = params.get("ig_error");
@@ -410,6 +416,12 @@ function WebConnect() {
         <p className="note" style={{ marginTop: 12 }}>
           <Icon.warn />
           <span>{error}</span>
+        </p>
+      )}
+      {removeError && (
+        <p className="note" style={{ marginTop: 12 }}>
+          <Icon.warn />
+          <span>{removeError}</span>
         </p>
       )}
 
@@ -472,12 +484,53 @@ function WebConnect() {
                       >
                         Reconnect
                       </a>
+                      {/* The channel's own trash icon only ever removed the
+                          local shadow, which the next load rebuilt from this
+                          row. This is the one control that removes the
+                          connection itself. */}
+                      <button
+                        className="btn"
+                        disabled={removing === account.id}
+                        onClick={async () => {
+                          const handle = `@${account.handle ?? account.external_id}`;
+                          const ok = await confirm({
+                            title: `Disconnect ${handle}`,
+                            body:
+                              "Removes the connection and this account's scheduled posts and analytics history. " +
+                              "Anything already published on Instagram stays there. " +
+                              "You can connect the account again later, but the history does not come back.",
+                            confirmLabel: "Disconnect",
+                            danger: true,
+                          });
+                          if (!ok) return;
+
+                          setRemoving(account.id);
+                          setRemoveError(null);
+                          try {
+                            await disconnect(account.id);
+                          } catch (caught: unknown) {
+                            setRemoveError(
+                              caught instanceof Error
+                                ? caught.message
+                                : `Could not disconnect ${handle}.`,
+                            );
+                          } finally {
+                            setRemoving(null);
+                          }
+                        }}
+                      >
+                        {removing === account.id ? "Disconnecting…" : "Disconnect"}
+                      </button>
                     </span>
                   </div>
                 );
               })}
             </div>
           ))}
+          <p className="note" style={{ marginTop: 10, opacity: 0.75 }}>
+            <Icon.warn />
+            <span>{DISCONNECT_NOTE}</span>
+          </p>
         </div>
       )}
 

@@ -190,6 +190,14 @@ export function instagramConnectUrl(
 export const SECOND_ACCOUNT_NOTE =
   "Connecting another account signs you out of Instagram's authorization screen so you can choose a different one — you will need that account's password. Reconnecting an existing account below does not.";
 
+/** Said out loud because the app cannot do it. Instagram Business Login has no
+ *  token revocation endpoint, so disconnecting here deletes our copy of the
+ *  token and everything attached to it, but the app stays listed in the user's
+ *  Instagram authorizations until they remove it there. Implying otherwise
+ *  would be claiming an authority we do not have. */
+export const DISCONNECT_NOTE =
+  "Disconnecting removes the account and its data from here. Instagram still lists this app under Settings → Apps and websites until you remove it there too.";
+
 export class ConnectError extends Error {}
 
 /**

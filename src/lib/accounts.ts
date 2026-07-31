@@ -14,7 +14,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isTauri } from "./connect";
-import { listAccounts, ServerError, type ServerAccount } from "./server";
+import {
+  disconnectAccount,
+  listAccounts,
+  ServerError,
+  type DisconnectResult,
+  type ServerAccount,
+} from "./server";
 import { useStore } from "./store";
 import type { Platform } from "./model";
 
@@ -24,6 +30,10 @@ interface Result {
   /** null while things are fine, or a message worth showing. */
   error: string | null;
   refresh: () => void;
+  /** Removes the connection server-side and locally. Rejects if the server
+   *  says no, so the caller can leave the channel alone rather than hiding a
+   *  connection that is in fact still live. */
+  disconnect: (accountId: string) => Promise<DisconnectResult>;
 }
 
 export function useServerAccounts(): Result {
@@ -113,5 +123,35 @@ export function useServerAccounts(): Result {
     }
   }, [accounts, addChannel, updateChannel]);
 
-  return { accounts, loading, error, refresh };
+  /* Disconnect, in the only order that actually sticks.
+   *
+   * The server row goes first. Deleting the local channel on its own is what
+   * used to look like a working Disconnect and wasn't: the row survived, the
+   * next load listed it again, and the mirror above rebuilt the channel. So
+   * the channel is only removed once the server has confirmed the row is gone,
+   * and a failure leaves the channel visible — a connection that is still live
+   * should still look connected.
+   *
+   * `mirrored` is cleared for this id too. It exists to stop the mirror
+   * re-adding a channel the user deleted by hand, but it would equally stop a
+   * genuine reconnect of the same account from ever being mirrored again in
+   * this session. */
+  const deleteChannel = store.deleteChannel;
+
+  const disconnect = useCallback(
+    async (accountId: string) => {
+      const result = await disconnectAccount(accountId);
+
+      mirrored.current.delete(accountId);
+      for (const channel of channels.current) {
+        if (channel.accountId === accountId) deleteChannel(channel.id);
+      }
+      setAccounts((current) => current.filter((a) => a.id !== accountId));
+
+      return result;
+    },
+    [deleteChannel],
+  );
+
+  return { accounts, loading, error, refresh, disconnect };
 }
