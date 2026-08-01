@@ -783,6 +783,16 @@ button.playb:hover { background: #fff; scale: 1.07; }
 .counter.warn { color: var(--warn); }
 .counter.over { color: var(--rubric); font-weight: 500; }
 
+/* A .meta line carrying a warning — the past-time notice under the composer's
+   time picker. Inline-flex so its leading icon sits on the text baseline. */
+.meta.warn {
+  color: var(--warn);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.meta.warn svg { align-self: center; flex: none; }
+
 /* thread parts */
 .part { display: flex; gap: 10px; align-items: flex-start; }
 .part-n {

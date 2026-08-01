@@ -120,6 +120,25 @@ export function untilLabel(s: string, from = new Date()): string {
   return days === 1 ? "tomorrow" : `in ${days}d`;
 }
 
+/** '14 minutes ago' / '12 hours ago' / '3 days ago'.
+ *
+ *  The mirror of untilLabel, and it exists because untilLabel collapses
+ *  everything already past into the single word "now" — which is exactly the
+ *  case where the distance is the thing worth saying. A time twelve hours
+ *  behind you and a time one minute behind you want very different reactions.
+ */
+export function agoLabel(s: string, from = new Date()): string {
+  const ms = from.getTime() - parseStamp(s).getTime();
+  if (ms <= 0) return "just now";
+  const mins = Math.round(ms / 60_000);
+  if (mins < 1) return "moments ago";
+  if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"} ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 /**
  * Six rows of seven days, Monday-start, covering `month` and the days either
  * side that fill the grid.

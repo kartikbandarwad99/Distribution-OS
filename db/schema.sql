@@ -97,6 +97,12 @@ create table if not exists post_targets (
   platform_post_id    text,
   error_reason        text,
   published_at        text,
+  -- When Instagram stopped being able to show us this media: deleted from the
+  -- app, or removed by Meta. A column rather than a `state`, deliberately —
+  -- the post really did publish, and rewriting history to say otherwise would
+  -- lose the publish time and every metric already collected against it. It
+  -- also keeps the state check constraint intact, which SQLite cannot alter.
+  removed_at          text,
   unique (post_id, account_id)
 );
 

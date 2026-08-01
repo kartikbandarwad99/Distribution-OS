@@ -11,7 +11,11 @@ import { config } from "../lib/env.js";
 import { json } from "../lib/http.js";
 import { decryptToken } from "../lib/crypto.js";
 import { query, run, nowISO, isoFromNow } from "../lib/db.js";
-import { fetchMediaMetrics, InsightsError } from "../lib/insights.js";
+import {
+  fetchMediaMetrics,
+  InsightsError,
+  MediaGoneError,
+} from "../lib/insights.js";
 import { INSIGHTS_SCOPE } from "./instagram-auth.js";
 
 /** How many media one refresh will fetch. Each costs two subrequests, and a
@@ -103,6 +107,7 @@ export async function refresh(request: Request, env: Env): Promise<Response> {
        JOIN accounts a ON a.id = t.account_id
       WHERE t.state = 'published'
         AND t.ig_media_id IS NOT NULL
+        AND t.removed_at IS NULL
         AND a.status = 'active'
         ${body.accountId ? "AND a.id = ?" : ""}
         ${body.force ? "" : "AND COALESCE((SELECT MAX(fetched_at) FROM post_metrics WHERE target_id = t.id), '') < ?"}
@@ -121,6 +126,8 @@ export async function refresh(request: Request, env: Env): Promise<Response> {
   const now = nowISO();
 
   let updated = 0;
+  /** Targets found to be deleted on Instagram during this run. */
+  let removed = 0;
   const problems: Array<{ accountId: string; handle: string | null; reason: string }> = [];
   /* One account's token failing means every one of its targets will fail the
    * same way. Recording it here turns twenty identical failures into one
@@ -172,6 +179,22 @@ export async function refresh(request: Request, env: Env): Promise<Response> {
       );
       updated++;
     } catch (error) {
+      /* Deleted on Instagram. Recorded once and then excluded from the query
+       * above, so this costs two subrequests exactly once instead of two on
+       * every refresh for the rest of the account's life. Not a `problem`:
+       * deleting your own post is a thing you meant to do, and listing it as
+       * an error every time would train you to ignore the list. */
+      if (error instanceof MediaGoneError) {
+        await run(
+          env,
+          `UPDATE post_targets SET removed_at = ? WHERE id = ?`,
+          now,
+          row.target_id,
+        );
+        removed++;
+        continue;
+      }
+
       const reason =
         error instanceof InsightsError
           ? error.message
@@ -201,6 +224,7 @@ export async function refresh(request: Request, env: Env): Promise<Response> {
   return json({
     considered: due.length,
     updated,
+    removed,
     /** True when the batch filled up, so the caller knows to come back. */
     more: due.length === BATCH,
     problems,

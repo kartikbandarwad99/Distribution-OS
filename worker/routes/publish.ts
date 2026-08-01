@@ -72,6 +72,28 @@ export async function schedule(request: Request, env: Env): Promise<Response> {
     return json({ error: "scheduledAt must be an ISO-8601 timestamp." }, 400);
   }
 
+  /* A time already past would publish instantly, because `rearm` clamps the
+   * alarm to `Math.max(at, Date.now())`. That clamp is right for a target that
+   * fell a little behind — a deploy, a retry — and catastrophic for one that
+   * was scheduled for the wrong half of the day: an AM/PM slip turns "goes out
+   * tonight" into "goes out this second", with no way to take it back.
+   *
+   * So `schedule` refuses, and `publishNow` remains the only way to say "now".
+   * The grace window covers clock skew between the browser and this Worker,
+   * which is what a genuine "in one minute" schedule looks like from here. */
+  const GRACE_MS = 60_000;
+  if (at < Date.now() - GRACE_MS) {
+    return json(
+      {
+        error:
+          "That time has already passed. Pick a time in the future, or use Publish now.",
+        scheduledAt: new Date(at).toISOString(),
+        now: nowISO(),
+      },
+      400,
+    );
+  }
+
   const target = await targetAccount(env, targetId);
   if (!target) return json({ error: "No such target." }, 404);
   if (target.state === "published") {

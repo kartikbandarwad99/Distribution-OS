@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { forgetAsset, getBlob, makePoster, probe, putBlob } from "./blobStore";
-import { toStamp } from "./dates";
+import { parseIso, toStamp } from "./dates";
 import {
   deriveTint,
   makePiece,
@@ -89,6 +89,8 @@ interface StoreValue extends StoreData {
   reschedulePiece: (id: string, stamp: string) => void;
   duplicatePiece: (id: string) => Piece | null;
   markPublished: (id: string, metrics?: Metrics) => void;
+  /** Server target state → local board. Piece id → published_at (ISO). */
+  reconcilePublished: (published: Map<string, string>) => void;
 
   /* articles */
   createArticle: (patch?: Partial<Article>) => Article;
@@ -322,6 +324,52 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [updatePiece],
   );
 
+  /**
+   * Folds what the server knows about publishing back into the board.
+   *
+   * This is the return leg the write-through in lib/publishing.ts never had:
+   * the app pushed posts to the server and then never asked what became of
+   * them, which is why a piece that had been on Instagram for hours still sat
+   * in the Scheduled column — and why the analytics page, which filters on
+   * `col === "published"`, stayed empty no matter how many metrics were
+   * fetched.
+   *
+   * Two rules keep it safe against a stale or partial read:
+   *
+   *   - It only ever moves a piece FORWARD, into published. A piece the server
+   *     has no opinion about is left exactly as it is, so a target that has
+   *     not synced yet cannot yank a card backwards out of Scheduled.
+   *   - `publishedAt` comes from the server's timestamp, not this machine's
+   *     clock, because the server is the one that watched it happen.
+   *
+   * Writing to setData once for the whole batch rather than calling
+   * markPublished per piece is deliberate: the reconcile runs on every load,
+   * and per-piece writes would be one localStorage serialisation each.
+   */
+  const reconcilePublished = useCallback(
+    (published: Map<string, string>) => {
+      if (!published.size) return;
+      setData((current) => {
+        let changed = false;
+        const pieces = current.pieces.map((p) => {
+          const at = published.get(p.id);
+          if (!at || p.col === "published") return p;
+          changed = true;
+          return {
+            ...p,
+            col: "published" as Col,
+            publishedAt: toStamp(parseIso(at)),
+            updatedAt: new Date().toISOString(),
+          };
+        });
+        // Bailing out unchanged keeps this from writing to localStorage —
+        // and re-rendering every view — on the reloads where nothing moved.
+        return changed ? { ...current, pieces } : current;
+      });
+    },
+    [],
+  );
+
   /* ── assets ───────────────────────────────────────────────────────────── */
 
   const importFiles = useCallback(
@@ -416,6 +464,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reschedulePiece,
       duplicatePiece,
       markPublished,
+      reconcilePublished,
 
       createArticle: (patch = {}) => {
         const now = new Date().toISOString();
@@ -587,6 +636,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       reschedulePiece,
       duplicatePiece,
       markPublished,
+      reconcilePublished,
       importFiles,
       addChannel,
       activeProjectId,
