@@ -43,6 +43,26 @@ export interface MediaMetrics {
 
 export class InsightsError extends Error {}
 
+/** The media node is gone from Instagram — deleted from the app, or removed by
+ *  Meta. Distinct from InsightsError because it is permanent: no amount of
+ *  retrying brings a deleted post back, so the caller stops asking rather than
+ *  spending two subrequests on it every refresh, forever. */
+export class MediaGoneError extends InsightsError {}
+
+/** Meta signals a missing node as code 100 / subcode 33, and phrases it as
+ *  "Unsupported get request. Object with ID '…' does not exist". Both are
+ *  checked: the codes are the contract, the text is the safety net for the
+ *  cases where Meta omits the subcode. */
+function isGone(payload: Record<string, unknown>): boolean {
+  const error = payload.error as
+    | { code?: number; error_subcode?: number; message?: string }
+    | undefined;
+  if (error?.code === 100 && error?.error_subcode === 33) return true;
+  return /does not exist|cannot be loaded|Unsupported get request/i.test(
+    error?.message ?? "",
+  );
+}
+
 async function get(
   path: string,
   params: Record<string, string>,
@@ -143,6 +163,9 @@ export async function fetchMediaMetrics(
   });
 
   if (!node.ok) {
+    if (isGone(node.payload)) {
+      throw new MediaGoneError(errorMessage(node.payload));
+    }
     throw new InsightsError(errorMessage(node.payload));
   }
 

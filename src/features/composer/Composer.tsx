@@ -7,7 +7,7 @@ import {
   chStyle,
 } from "../../components/UI";
 import { useConfirm } from "../../components/Dialog";
-import { parseStamp, toStamp } from "../../lib/dates";
+import { agoLabel, parseStamp, toStamp, untilLabel } from "../../lib/dates";
 import { Glyph, Icon } from "../../lib/glyphs";
 import {
   KIND_LABEL,
@@ -24,6 +24,7 @@ import {
 import { useStore } from "../../lib/store";
 import { isTauri } from "../../lib/connect";
 import { publishPieceNow, schedulePiece } from "../../lib/publishing";
+import { useTargets } from "../../lib/targets";
 
 /*
  * The composer is the only place a piece is written, and it is deliberately
@@ -55,6 +56,7 @@ export function Composer({
 }) {
   const store = useStore();
   const confirm = useConfirm();
+  const serverTargets = useTargets();
   const piece = store.pieces.find((p) => p.id === pieceId);
   const [pickerOpen, setPickerOpen] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -73,6 +75,15 @@ export function Composer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, pickerOpen]);
+
+  /* A composer left open across its own scheduled minute must stop offering a
+   * button that would now fail, so `inThePast` below is recomputed on a tick
+   * rather than only when the piece changes. */
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const targets = useMemo(
     () => store.channels.filter((c) => piece?.channels.includes(c.id)),
@@ -125,6 +136,9 @@ export function Composer({
       } else {
         await publishPieceNow(piece, store.channels, store.assets);
       }
+      // Re-read publishing state so the card shows what just happened rather
+      // than waiting for the next reload to find out.
+      serverTargets?.refresh();
       onClose();
     } catch (caught) {
       setSendError(
@@ -200,6 +214,16 @@ export function Composer({
   const scheduleValue = piece.scheduledFor
     ? piece.scheduledFor.slice(0, 16)
     : "";
+
+  /* A time already past cannot be scheduled: the server refuses it, and before
+   * it did, the alarm clamped it to "now" and the post went out instantly. The
+   * native picker makes this easy to hit — at 12:19 PM, "12:22 AM" is one
+   * arrow-key away, reads as a perfectly ordinary time, and is twelve hours
+   * behind you. */
+  const scheduledMs = piece.scheduledFor
+    ? parseStamp(piece.scheduledFor).getTime()
+    : null;
+  const inThePast = scheduledMs !== null && scheduledMs < Date.now();
 
   return (
     <>
@@ -504,6 +528,25 @@ export function Composer({
                   }
                 />
               </label>
+
+              {/* The direction of travel, spelled out. "12:22 AM" alone gives
+                  you no way to notice it is behind you; "12 hours ago" does. */}
+              {piece.scheduledFor && (
+                <p
+                  className={`meta ${inThePast ? "warn" : ""}`}
+                  style={{ marginTop: 6 }}
+                >
+                  {inThePast ? (
+                    <>
+                      <Icon.warn /> That time has already passed —{" "}
+                      {agoLabel(piece.scheduledFor)}. Pick a later time, or use
+                      Publish now.
+                    </>
+                  ) : (
+                    untilLabel(piece.scheduledFor)
+                  )}
+                </p>
+              )}
               <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                 {[
                   { label: "Today 09:00", days: 0, hour: 9 },
@@ -656,13 +699,20 @@ export function Composer({
 
           <button
             className="btn pri"
-            disabled={found.length > 0 || !piece.scheduledFor || sending !== null}
+            disabled={
+              found.length > 0 ||
+              !piece.scheduledFor ||
+              inThePast ||
+              sending !== null
+            }
             title={
               found.length
                 ? "Fix what's listed on the right first"
                 : !piece.scheduledFor
                   ? "Pick a time first"
-                  : undefined
+                  : inThePast
+                    ? "That time has already passed — pick a later one, or use Publish now"
+                    : undefined
             }
             onClick={() => void send("schedule")}
           >

@@ -21,6 +21,7 @@ import {
 import { Glyph, Icon } from "../../lib/glyphs";
 import { COLUMNS, KIND_LABEL, fmt, type Col, type Piece } from "../../lib/model";
 import { useStore } from "../../lib/store";
+import { usePieceStatus } from "../../lib/targets";
 
 /*
  * Plan answers one question — when does it go out — in two shapes over the
@@ -200,6 +201,10 @@ function KanbanCard({
   const channel = store.channels.find((c) => c.id === piece.channels[0]);
   const extra = piece.channels.length - 1;
   const [dragging, setDragging] = useState(false);
+  /* What the server says actually happened to this piece, as opposed to what
+     the board was told to show when Schedule was pressed. Null on the desktop
+     build and for pieces the server has never heard of. */
+  const status = usePieceStatus(piece.id);
 
   const when = piece.scheduledFor
     ? parseStamp(piece.scheduledFor).toLocaleString([], {
@@ -288,7 +293,20 @@ function KanbanCard({
           {when ?? (piece.publishedAt ? formatTime(piece.publishedAt) : "—")}
         </span>
         <span className="grow" />
-        {piece.metrics ? (
+        {/* Server truth first. A card that says "Scheduled · ready" for a post
+            that went out this morning — or that Instagram no longer has — is
+            worse than no status at all. */}
+        {status?.removed ? (
+          <span className="hchip warn" title="Published, then deleted on Instagram">
+            Removed on Instagram
+          </span>
+        ) : status?.failed ? (
+          <span className="hchip warn" title={status.reason ?? undefined}>
+            {status.reason ? "Needs review" : "Failed"}
+          </span>
+        ) : status?.inFlight ? (
+          <span className="hchip">Publishing…</span>
+        ) : piece.metrics ? (
           <span className="meta">{fmt(piece.metrics.reach)} reach</span>
         ) : blocker ? (
           <span className="hchip warn">{blocker}</span>

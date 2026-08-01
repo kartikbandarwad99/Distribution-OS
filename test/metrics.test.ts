@@ -81,6 +81,8 @@ function stubInsights(
   options: {
     reject?: string[];
     nodeFails?: string;
+    /** Media deleted on Instagram: code 100 / subcode 33. */
+    nodeGone?: boolean;
     likeCount?: number;
   } = {},
 ): InsightsStub {
@@ -119,6 +121,20 @@ function stubInsights(
     }
 
     // The media node itself.
+    if (options.nodeGone) {
+      // Exactly what Meta returns for a media that has been deleted.
+      return Response.json(
+        {
+          error: {
+            message:
+              "Unsupported get request. Object with ID '17900000000000000' does not exist, cannot be loaded due to missing permissions, or does not support this operation.",
+            code: 100,
+            error_subcode: 33,
+          },
+        },
+        { status: 400 },
+      );
+    }
     if (options.nodeFails) {
       return Response.json(
         { error: { message: options.nodeFails } },
@@ -284,6 +300,83 @@ describe("refreshing metrics", () => {
 
     const { results } = await metricRows(fixture.targetId);
     expect(results.length).toBeGreaterThan(1);
+  });
+});
+
+/* A post deleted on Instagram.
+ *
+ * Before this was handled, a deleted media stayed `state = 'published'` with a
+ * live ig_media_id forever, so every refresh spent two subrequests asking Meta
+ * about a post that no longer existed and reported the resulting error as a
+ * problem the user was expected to act on. There is nothing to act on: they
+ * deleted it on purpose. Recording it once and skipping it afterwards is both
+ * the honest status and the one that stops burning rate limit that publishing
+ * needs. */
+describe("media deleted on Instagram", () => {
+  let stub: InsightsStub;
+
+  beforeEach(async () => {
+    await applySchema();
+  });
+  afterEach(() => stub?.restore());
+
+  it("marks the target removed instead of reporting a problem", async () => {
+    stub = stubInsights({ nodeGone: true });
+    const fixture = await seedPublished();
+
+    const response = await refresh({ accountId: fixture.accountId });
+    expect(response.status).toBe(200);
+
+    const result = (await response.json()) as {
+      updated: number;
+      removed: number;
+      problems: unknown[];
+    };
+    expect(result.removed).toBe(1);
+    expect(result.updated).toBe(0);
+    expect(result.problems).toHaveLength(0);
+
+    const row = await env.DB.prepare(
+      `SELECT state, removed_at FROM post_targets WHERE id = ?`,
+    )
+      .bind(fixture.targetId)
+      .first<{ state: string; removed_at: string | null }>();
+
+    // Still published — it really did go out, and the metrics collected while
+    // it was up stay valid. `removed_at` is the new fact, not a rewrite.
+    expect(row!.state).toBe("published");
+    expect(row!.removed_at).not.toBeNull();
+  });
+
+  it("stops asking Instagram about it on later refreshes", async () => {
+    stub = stubInsights({ nodeGone: true });
+    const fixture = await seedPublished();
+    await refresh({ accountId: fixture.accountId });
+
+    const before = stub.calls.filter((c) =>
+      c.includes("graph.instagram"),
+    ).length;
+    expect(before).toBeGreaterThan(0);
+
+    await refresh({ accountId: fixture.accountId, force: true });
+
+    // Not one more call, even with force — the row is excluded by the query.
+    expect(
+      stub.calls.filter((c) => c.includes("graph.instagram")),
+    ).toHaveLength(before);
+  });
+
+  it("does not mark the account expired", async () => {
+    stub = stubInsights({ nodeGone: true });
+    const fixture = await seedPublished();
+    await refresh({ accountId: fixture.accountId });
+
+    const account = await env.DB.prepare(
+      `SELECT status FROM accounts WHERE id = ?`,
+    )
+      .bind(fixture.accountId)
+      .first<{ status: string }>();
+    expect(account!.status).toBe("active");
   });
 });
 

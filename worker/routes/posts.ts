@@ -145,7 +145,7 @@ export async function listTargets(
         env,
         `SELECT t.id, t.post_id, t.account_id, t.scheduled_at, t.state,
                 t.attempts, t.error_reason, t.published_at, t.platform_post_id,
-                a.handle
+                t.removed_at, a.handle
            FROM post_targets t
            LEFT JOIN accounts a ON a.id = t.account_id
           WHERE t.post_id = ?
@@ -156,7 +156,7 @@ export async function listTargets(
         env,
         `SELECT t.id, t.post_id, t.account_id, t.scheduled_at, t.state,
                 t.attempts, t.error_reason, t.published_at, t.platform_post_id,
-                a.handle
+                t.removed_at, a.handle
            FROM post_targets t
            LEFT JOIN accounts a ON a.id = t.account_id
           WHERE t.state != 'draft'

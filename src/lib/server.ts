@@ -165,6 +165,10 @@ export interface ServerTarget {
   error_reason: string | null;
   published_at: string | null;
   platform_post_id: string | null;
+  /** Set once Instagram stops being able to show us the media — deleted from
+   *  the app, or removed by Meta. The publish still happened; this says the
+   *  post is no longer there. */
+  removed_at: string | null;
   handle: string | null;
 }
 
